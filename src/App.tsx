@@ -414,7 +414,6 @@ const handleAddToBasket = () => {
         items={cartItems}
         onUpdateQuantity={handleUpdateQuantity}
         onRemoveItem={handleRemoveItem}
-        onCheckout={handleOpenCheckout}
         currency={selectedCurrency}
         primaryColor={storeConfig.primaryColor}
         freeShippingThreshold={storeConfig.freeShippingThreshold}
