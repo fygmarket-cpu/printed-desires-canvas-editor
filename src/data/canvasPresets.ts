@@ -1,3 +1,8 @@
+import artworkOilPortrait from '../assets/images/artwork_romantic_oil_portrait_1790308547213.jpg';
+import artworkMountainLake from '../assets/images/artwork_mountain_lake_landscape_1790308558798.jpg';
+import artworkModernAbstract from '../assets/images/artwork_modern_minimalist_abstract_1790308568865.jpg';
+import roomInterior from '../assets/images/room_interior_living_sofa_1790308577503.jpg';
+
 import {
   CanvasSize,
   CategoryItem,
@@ -14,23 +19,23 @@ export const PRESET_ARTWORKS = [
     id: 'oil-portrait',
     title: 'Dama con Rosas (Óleo Clásico)',
     category: 'Pintura & Arte',
-    url: '/src/assets/images/artwork_romantic_oil_portrait_1790308547213.jpg',
+    url: artworkOilPortrait,
   },
   {
     id: 'mountain-lake',
     title: 'Lago Alpino al Atardecer',
     category: 'Paisajes & Naturaleza',
-    url: '/src/assets/images/artwork_mountain_lake_landscape_1790308558798.jpg',
+    url: artworkMountainLake,
   },
   {
     id: 'modern-abstract',
     title: 'Textura Minimalista Oro & Barro',
     category: 'Arte Moderno',
-    url: '/src/assets/images/artwork_modern_minimalist_abstract_1790308568865.jpg',
+    url: artworkModernAbstract,
   },
 ];
 
-export const ROOM_MOCKUP_IMAGE = '/src/assets/images/room_interior_living_sofa_1790308577503.jpg';
+export const ROOM_MOCKUP_IMAGE = roomInterior;
 
 export const CANVAS_SIZES: CanvasSize[] = [
   // Popular
