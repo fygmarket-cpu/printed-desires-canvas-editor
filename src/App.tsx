@@ -14,7 +14,6 @@ import { SizeSelector } from './components/SizeSelector';
 import { EditorModal } from './components/EditorModal';
 import { ImageModal } from './components/ImageModal';
 import { CartDrawer } from './components/CartDrawer';
-import { CheckoutModal } from './components/CheckoutModal';
 import { QualityInfoModal } from './components/QualityInfoModal';
 import { StoreEditorModal } from './components/StoreEditorModal';
 import { ShopifyCodeModal } from './components/ShopifyCodeModal';
@@ -111,7 +110,6 @@ export default function App() {
   const [isEditorOpen, setIsEditorOpen] = useState<boolean>(false);
   const [isImageModalOpen, setIsImageModalOpen] = useState<boolean>(false);
   const [isCartOpen, setIsCartOpen] = useState<boolean>(false);
-  const [isCheckoutOpen, setIsCheckoutOpen] = useState<boolean>(false);
   const [isQualityModalOpen, setIsQualityModalOpen] = useState<boolean>(false);
   const [isStoreEditorOpen, setIsStoreEditorOpen] = useState<boolean>(false);
   const [isShopifyOpen, setIsShopifyOpen] = useState<boolean>(false);
