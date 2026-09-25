@@ -15,7 +15,6 @@ import { EditorModal } from './components/EditorModal';
 import { ImageModal } from './components/ImageModal';
 import { CartDrawer } from './components/CartDrawer';
 import { QualityInfoModal } from './components/QualityInfoModal';
-import { StoreEditorModal } from './components/StoreEditorModal';
 import { ShopifyCodeModal } from './components/ShopifyCodeModal';
 import { Check, Layers, Palette, Shield, Award } from 'lucide-react';
 
