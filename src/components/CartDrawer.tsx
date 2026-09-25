@@ -20,7 +20,6 @@ interface CartDrawerProps {
   items: CartItem[];
   onUpdateQuantity: (id: string, delta: number) => void;
   onRemoveItem: (id: string) => void;
-  onCheckout: () => void;
   currency: CurrencyConfig | string;
   primaryColor?: string;
   freeShippingThreshold?: number;
@@ -33,7 +32,6 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
   items,
   onUpdateQuantity,
   onRemoveItem,
-  onCheckout,
   currency,
   primaryColor = '#e60067',
   freeShippingThreshold = 60,
