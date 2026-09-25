@@ -143,31 +143,119 @@ export default function App() {
     }));
   };
 
-  // Add to basket
-  const handleAddToBasket = () => {
-    let price = customization.size.discountedPrice;
-    const selectedDepth = storeConfig.depthOptions.find(
-      (d) => d.depthCm === customization.depthCm
-    );
-    if (selectedDepth) price += selectedDepth.extraPrice;
+// ============================================================
+// PRINTED DESIRES → SHOPIFY BRIDGE
+// Envía la configuración final al Shopify parent window.
+// Shopify será quien ejecute /cart/add.js.
+// ============================================================
 
-    const selectedFrame = storeConfig.frames.find((f) => f.id === customization.frameStyle);
-    if (selectedFrame) price += selectedFrame.price;
+const handleAddToBasket = () => {
 
-    const newItem: CartItem = {
-      id: `cart-${Date.now()}`,
-      customization: { ...customization },
-      quantity: 1,
-      unitPrice: Math.round(price * 100) / 100,
-      addedAt: new Date().toISOString(),
-    };
+  let price = customization.size.discountedPrice;
 
-    setCartItems((prev) => [newItem, ...prev]);
-    setIsCartOpen(true);
+  const selectedDepth = storeConfig.depthOptions.find(
+    (d) => d.depthCm === customization.depthCm
+  );
 
-    setToastMessage(`¡Lienzo de ${customization.size.label} añadido a tu cesta!`);
-    setTimeout(() => setToastMessage(null), 3500);
+  if (selectedDepth) {
+    price += selectedDepth.extraPrice;
+  }
+
+  const selectedFrame = storeConfig.frames.find(
+    (f) => f.id === customization.frameStyle
+  );
+
+  if (selectedFrame) {
+    price += selectedFrame.price;
+  }
+
+  const finalPrice = Math.round(price * 100) / 100;
+
+  /*
+   * Datos que viajarán desde GitHub Pages
+   * hacia la ventana de Shopify.
+   */
+
+  const orderItem = {
+
+    quantity: 1,
+
+    sizeId: customization.size.id,
+
+    sizeLabel: customization.size.label,
+
+    depthCm: customization.depthCm,
+
+    frameId: customization.frameStyle,
+
+    frameName: selectedFrame?.name || 'Sin Marco',
+
+    wrapStyle: customization.wrapStyle,
+
+    price: finalPrice,
+
+    imageUrl: customization.selectedImage,
+
+    imageName: customization.imageName,
+
+    imageDimensions: customization.imageDimensions || null,
+
+    filter: customization.filter,
+
+    adjustments: customization.adjustments,
+
+    transform: customization.transform,
+
+    textLayers: customization.textLayers,
+
   };
+
+  /*
+   * Enviar al Shopify opener.
+   */
+
+  if (window.opener && !window.opener.closed) {
+
+    window.opener.postMessage(
+      {
+        type: 'PRINTED_DESIRES_ORDER_READY',
+        item: orderItem
+      },
+      '*'
+    );
+
+    /*
+     * Cerrar el editor después de enviar
+     * correctamente la configuración.
+     */
+
+    setToastMessage(
+      'Configuración enviada a tu carrito de Shopify.'
+    );
+
+    setTimeout(() => {
+
+      window.close();
+
+    }, 700);
+
+    return;
+  }
+
+  /*
+   * Si el editor no fue abierto desde Shopify,
+   * mostramos un mensaje en lugar de intentar
+   * llamar directamente a la API de Shopify.
+   */
+
+  setToastMessage(
+    'Abre el personalizador desde tu tienda Printed Desires para continuar con el carrito.'
+  );
+
+  setTimeout(() => {
+    setToastMessage(null);
+  }, 4000);
+};
 
   const handleUpdateQuantity = (id: string, delta: number) => {
     setCartItems((prev) =>
