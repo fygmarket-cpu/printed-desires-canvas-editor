@@ -1,0 +1,8 @@
+{
+  "name": "Printed Desires Canvas Designer",
+  "description": "Diseñador profesional de lienzos personalizados en tiempo real para Printed Desires Fine Art Editions.",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}

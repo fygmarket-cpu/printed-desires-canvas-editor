@@ -1,0 +1,84 @@
+@import "tailwindcss";
+
+@layer base {
+  :root {
+    --cream: #F8F5F0;
+    --dark: #171513;
+    --brown: #4A352B;
+    --gold: #B99A62;
+    --rose: #B98989;
+    --white: #FFFFFF;
+    --shadow: #121212;
+  }
+
+  body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+    font-weight: 400;
+    background-color: #F8F5F0;
+    color: #171513;
+  }
+  
+  h1, h2, h3, h4, .font-serif-display, .font-heading {
+    font-family: 'Cormorant Garamond', Garamond, Georgia, serif;
+    font-weight: 400;
+    letter-spacing: -0.01em;
+  }
+}
+
+/* Subtle realistic canvas fabric texture pattern */
+.canvas-texture {
+  background-image: radial-gradient(rgba(23, 21, 19, 0.035) 1px, transparent 0),
+                    radial-gradient(rgba(23, 21, 19, 0.035) 1px, transparent 0);
+  background-position: 0 0, 2px 2px;
+  background-size: 4px 4px;
+}
+
+/* 3D scene preservation */
+.preserve-3d {
+  transform-style: preserve-3d;
+}
+
+.perspective-1000 {
+  perspective: 1000px;
+}
+
+.perspective-1200 {
+  perspective: 1200px;
+}
+
+.backface-hidden {
+  backface-visibility: hidden;
+}
+
+/* Luxury shadows based on #121212 */
+.shadow-luxury-sm {
+  box-shadow: 0 2px 8px -1px rgba(18, 18, 18, 0.06);
+}
+
+.shadow-luxury-md {
+  box-shadow: 0 8px 24px -4px rgba(18, 18, 18, 0.10), 0 2px 6px -1px rgba(18, 18, 18, 0.06);
+}
+
+.shadow-luxury-lg {
+  box-shadow: 0 20px 40px -10px rgba(18, 18, 18, 0.20), 0 4px 12px -2px rgba(18, 18, 18, 0.08);
+}
+
+.shadow-luxury-xl {
+  box-shadow: 0 30px 60px -15px rgba(18, 18, 18, 0.28);
+}
+
+/* Custom scrollbars matching warm cream and brown */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: #F8F5F0;
+}
+::-webkit-scrollbar-thumb {
+  background: #D9CEBF;
+  border-radius: 9999px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #B99A62;
+}
