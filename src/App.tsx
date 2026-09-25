@@ -408,18 +408,15 @@ const handleAddToBasket = () => {
         currentImage={customization.selectedImage}
       />
 
-      <CartDrawer
-        isOpen={isCartOpen}
-        onClose={() => setIsCartOpen(false)}
-        items={cartItems}
-        onUpdateQuantity={handleUpdateQuantity}
-        onRemoveItem={handleRemoveItem}
-        currency={selectedCurrency}
-        primaryColor={storeConfig.primaryColor}
-        freeShippingThreshold={storeConfig.freeShippingThreshold}
-        shippingCost={storeConfig.shippingCost}
-      />
-
+     <CartDrawer
+  isOpen={isCartOpen}
+  onClose={() => setIsCartOpen(false)}
+  items={cartItems}
+  onUpdateQuantity={handleUpdateQuantity}
+  onRemoveItem={handleRemoveItem}
+  currency={selectedCurrency}
+  primaryColor={storeConfig.primaryColor}
+/>
       <QualityInfoModal
         isOpen={isQualityModalOpen}
         onClose={() => setIsQualityModalOpen(false)}
