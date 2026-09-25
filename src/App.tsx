@@ -273,15 +273,6 @@ const handleAddToBasket = () => {
     setCartItems((prev) => prev.filter((i) => i.id !== id));
   };
 
-  const handleOpenCheckout = () => {
-    setIsCartOpen(false);
-    setIsCheckoutOpen(true);
-  };
-
-  const handleOrderSuccess = () => {
-    setCartItems([]);
-  };
-
   // Reset store defaults
   const handleResetDefaults = () => {
     if (confirm('¿Restablecer toda la configuración de la tienda a los valores iniciales?')) {
@@ -426,18 +417,6 @@ const handleAddToBasket = () => {
         onCheckout={handleOpenCheckout}
         currency={selectedCurrency}
         primaryColor={storeConfig.primaryColor}
-        freeShippingThreshold={storeConfig.freeShippingThreshold}
-        shippingCost={storeConfig.shippingCost}
-      />
-
-      <CheckoutModal
-        isOpen={isCheckoutOpen}
-        onClose={() => setIsCheckoutOpen(false)}
-        items={cartItems}
-        onOrderSuccess={handleOrderSuccess}
-        currency={selectedCurrency}
-        primaryColor={storeConfig.primaryColor}
-        brandName={storeConfig.brandName}
         freeShippingThreshold={storeConfig.freeShippingThreshold}
         shippingCost={storeConfig.shippingCost}
       />
