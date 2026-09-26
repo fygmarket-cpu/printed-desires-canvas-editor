@@ -1,5 +1,3 @@
-import { CurrencyConfig } from '../types/canvas';
-
 export type MaterialId =
   | 'canvas'
   | 'framed'
@@ -16,67 +14,70 @@ export interface MaterialSize {
   sku?: string;
 }
 
+export interface MaterialOptions {
+  frameColors?: string[];
+  finishes?: string[];
+  thicknesses?: string[];
+}
+
+export interface MaterialUI {
+  title: string;
+  subtitle: string;
+  uploadText: string;
+  sizeText: string;
+  priceText: string;
+  addToCartText: string;
+}
+
 export interface MaterialConfig {
   id: MaterialId;
+
+  /**
+   * Internal material name.
+   */
   name: string;
+
+  /**
+   * Customer-facing material name.
+   */
   displayName: string;
+
+  /**
+   * Description shown inside the material editor.
+   */
   description: string;
 
   /**
-   * Shopify
-   * Se completará cuando conectemos cada material
-   * con sus productos/variantes reales.
+   * Shopify product handle.
+   * Will be connected later to the real Shopify product.
    */
   shopifyProductHandle?: string;
 
   /**
-   * Identificador visual utilizado por el editor.
+   * Defines which visual preview engine
+   * the material editor should use.
    */
-  previewType:
-    | 'canvas'
-    | 'framed'
-    | 'metal'
-    | 'acrylic'
-    | 'poster';
+  previewType: MaterialId;
 
   /**
-   * Tamaños disponibles para este material.
+   * Available sizes for this material.
    */
   sizes: MaterialSize[];
 
   /**
-   * Permite añadir futuras opciones específicas
-   * sin modificar el motor principal.
+   * Material-specific options.
    */
-  options?: {
-    frameColors?: string[];
-    finishes?: string[];
-    thicknesses?: string[];
-  };
+  options?: MaterialOptions;
 
   /**
-   * Textos del editor.
+   * UI text for the material editor.
    */
-  ui: {
-    title: string;
-    subtitle: string;
-    uploadText: string;
-    sizeText: string;
-    priceText: string;
-    addToCartText: string;
-  };
+  ui: MaterialUI;
 }
 
-/*
-|--------------------------------------------------------------------------
-| CANVAS
-|--------------------------------------------------------------------------
-|
-| IMPORTANTE:
-| Esta configuración mantiene la base del Canvas actual.
-| No estamos modificando todavía canvasPresets.ts.
-|
-*/
+/* =====================================================================
+   CANVAS
+   ===================================================================== */
 
 export const canvasMaterial: MaterialConfig = {
   id: 'canvas',
@@ -131,11 +132,9 @@ export const canvasMaterial: MaterialConfig = {
   },
 };
 
-/*
-|--------------------------------------------------------------------------
-| FRAMED
-|--------------------------------------------------------------------------
-*/
+/* =====================================================================
+   FRAMED PRINT
+   ===================================================================== */
 
 export const framedMaterial: MaterialConfig = {
   id: 'framed',
@@ -162,7 +161,8 @@ export const framedMaterial: MaterialConfig = {
 
   ui: {
     title: 'Create Your Framed Print',
-    subtitle: 'Turn your photo into elegant framed wall art.',
+    subtitle:
+      'Turn your photo into elegant framed wall art.',
     uploadText: 'Upload Your Photo',
     sizeText: 'Choose Your Size',
     priceText: 'Price',
@@ -170,11 +170,9 @@ export const framedMaterial: MaterialConfig = {
   },
 };
 
-/*
-|--------------------------------------------------------------------------
-| METAL
-|--------------------------------------------------------------------------
-*/
+/* =====================================================================
+   METAL PRINT
+   ===================================================================== */
 
 export const metalMaterial: MaterialConfig = {
   id: 'metal',
@@ -199,7 +197,8 @@ export const metalMaterial: MaterialConfig = {
 
   ui: {
     title: 'Create Your Metal Print',
-    subtitle: 'Create a modern statement piece from your photo.',
+    subtitle:
+      'Create a modern statement piece from your photo.',
     uploadText: 'Upload Your Photo',
     sizeText: 'Choose Your Size',
     priceText: 'Price',
@@ -207,11 +206,9 @@ export const metalMaterial: MaterialConfig = {
   },
 };
 
-/*
-|--------------------------------------------------------------------------
-| ACRYLIC
-|--------------------------------------------------------------------------
-*/
+/* =====================================================================
+   ACRYLIC PRINT
+   ===================================================================== */
 
 export const acrylicMaterial: MaterialConfig = {
   id: 'acrylic',
@@ -236,7 +233,8 @@ export const acrylicMaterial: MaterialConfig = {
 
   ui: {
     title: 'Create Your Acrylic Print',
-    subtitle: 'Give your photo a luxurious gallery finish.',
+    subtitle:
+      'Give your photo a luxurious gallery finish.',
     uploadText: 'Upload Your Photo',
     sizeText: 'Choose Your Size',
     priceText: 'Price',
@@ -244,11 +242,9 @@ export const acrylicMaterial: MaterialConfig = {
   },
 };
 
-/*
-|--------------------------------------------------------------------------
-| POSTER
-|--------------------------------------------------------------------------
-*/
+/* =====================================================================
+   POSTER PRINT
+   ===================================================================== */
 
 export const posterMaterial: MaterialConfig = {
   id: 'poster',
@@ -276,7 +272,8 @@ export const posterMaterial: MaterialConfig = {
 
   ui: {
     title: 'Create Your Poster',
-    subtitle: 'Create beautiful wall art from your favorite photo.',
+    subtitle:
+      'Create beautiful wall art from your favorite photo.',
     uploadText: 'Upload Your Photo',
     sizeText: 'Choose Your Size',
     priceText: 'Price',
@@ -284,13 +281,14 @@ export const posterMaterial: MaterialConfig = {
   },
 };
 
-/*
-|--------------------------------------------------------------------------
-| MASTER MATERIAL CONFIG
-|--------------------------------------------------------------------------
-*/
+/* =====================================================================
+   MASTER MATERIAL CONFIGURATION
+   ===================================================================== */
 
-export const materialConfigs: Record<MaterialId, MaterialConfig> = {
+export const materialConfigs: Record<
+  MaterialId,
+  MaterialConfig
+> = {
   canvas: canvasMaterial,
   framed: framedMaterial,
   metal: metalMaterial,
@@ -298,11 +296,9 @@ export const materialConfigs: Record<MaterialId, MaterialConfig> = {
   poster: posterMaterial,
 };
 
-/*
-|--------------------------------------------------------------------------
-| HELPERS
-|--------------------------------------------------------------------------
-*/
+/* =====================================================================
+   HELPERS
+   ===================================================================== */
 
 /**
  * Returns the configuration for a material.
@@ -314,7 +310,7 @@ export function getMaterialConfig(
 }
 
 /**
- * Checks whether a material ID is valid.
+ * Checks whether a value is a valid material ID.
  */
 export function isMaterialId(
   value: string
@@ -325,7 +321,7 @@ export function isMaterialId(
 /**
  * Default material.
  *
- * Canvas remains the default so the current
- * editor behavior is preserved.
+ * Canvas remains the default material so the
+ * existing Canvas editor continues to work.
  */
 export const DEFAULT_MATERIAL: MaterialId = 'canvas';
