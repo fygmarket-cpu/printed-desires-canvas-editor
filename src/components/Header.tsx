@@ -11,7 +11,7 @@ import {
 import { CurrencyConfig, StoreConfig } from '../types/canvas';
 import { formatCurrency } from '../utils/canvasHelpers';
 import { PrintedDesiresLogo } from './PrintedDesiresLogo';
-import { MaterialId } from '../config/materialConfig';
+import { MaterialId } from '../materialConfig';
 
 interface HeaderProps {
   cartCount: number;
