@@ -473,7 +473,12 @@ export default function App() {
       ====================================================== */}
 
       <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-10">
-
+        
+        {/* TEMPORARY MATERIAL TEST */}
+        <div className="mb-4 rounded-lg border border-[#B99A62] bg-[#FFFFFF] px-4 py-3 text-sm text-[#4A352B]">
+          Material seleccionado: <strong>{selectedMaterial}</strong>
+        </div>
+       
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8 items-start">
 
           {/* ==================================================
