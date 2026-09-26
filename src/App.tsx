@@ -21,10 +21,8 @@ import { ImageModal } from './components/ImageModal';
 import { CartDrawer } from './components/CartDrawer';
 import { QualityInfoModal } from './components/QualityInfoModal';
 import { ShopifyCodeModal } from './components/ShopifyCodeModal';
-import {
-  MaterialId,
-  DEFAULT_MATERIAL,
-import { DEFAULT_MATERIAL } from "./materialConfig";
+import { MaterialId, DEFAULT_MATERIAL } from './materialConfig';
+
 import {
   Check,
   Layers,
