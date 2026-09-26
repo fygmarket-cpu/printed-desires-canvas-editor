@@ -21,7 +21,10 @@ import { ImageModal } from './components/ImageModal';
 import { CartDrawer } from './components/CartDrawer';
 import { QualityInfoModal } from './components/QualityInfoModal';
 import { ShopifyCodeModal } from './components/ShopifyCodeModal';
-
+import {
+  MaterialId,
+  DEFAULT_MATERIAL,
+} from './config/materialConfig';
 import {
   Check,
   Layers,
@@ -33,6 +36,8 @@ import {
 const STORAGE_KEY = 'printed_desires_store_config_v2';
 
 export default function App() {
+    const [selectedMaterial, setSelectedMaterial] =
+    useState<MaterialId>(DEFAULT_MATERIAL);
   // ============================================================
   // STORE CONFIG
   // ============================================================
@@ -90,7 +95,13 @@ export default function App() {
       selectedCurrencyCode: code,
     }));
   };
+  // ============================================================
+  // MATERIAL SELECTION
+  // ============================================================
 
+  const handleSelectMaterial = (material: MaterialId) => {
+    setSelectedMaterial(material);
+  };
   // ============================================================
   // INITIAL CANVAS
   // ============================================================
@@ -447,26 +458,17 @@ export default function App() {
           HEADER
       ====================================================== */}
 
-      <Header
-        cartCount={cartCount}
-        cartTotal={cartTotal}
-        config={storeConfig}
-        selectedCurrency={
-          selectedCurrency
-        }
-        onCurrencyChange={
-          handleCurrencyChange
-        }
-        onOpenCart={() =>
-          setIsCartOpen(true)
-        }
-        onOpenShopify={() =>
-          setIsShopifyOpen(true)
-        }
-        onOpenHelp={() =>
-          setIsQualityModalOpen(true)
-        }
-      />
+    <Header
+  cartCount={cartCount}
+  cartTotal={cartTotal}
+  config={storeConfig}
+  selectedCurrency={selectedCurrency}
+  onCurrencyChange={handleCurrencyChange}
+  onOpenCart={() => setIsCartOpen(true)}
+  onOpenShopify={() => setIsShopifyOpen(true)}
+  onOpenHelp={() => setIsQualityModalOpen(true)}
+  onSelectMaterial={handleSelectMaterial}
+/>
 
       {/* ======================================================
           MAIN CUSTOMIZER
