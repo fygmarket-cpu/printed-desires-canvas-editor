@@ -24,7 +24,7 @@ import { ShopifyCodeModal } from './components/ShopifyCodeModal';
 import {
   MaterialId,
   DEFAULT_MATERIAL,
-} from './config/materialConfig';
+import { DEFAULT_MATERIAL } from "./materialConfig";
 import {
   Check,
   Layers,
