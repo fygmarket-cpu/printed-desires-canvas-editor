@@ -11,7 +11,6 @@ import { Header } from './components/Header';
 import { Canvas3DViewer } from './components/Canvas3DViewer';
 import { RoomVisualizer } from './components/RoomVisualizer';
 import { SizeSelector } from './components/SizeSelector';
-import { EditorModal } from './components/EditorModal';
 import { ImageModal } from './components/ImageModal';
 import { CartDrawer } from './components/CartDrawer';
 import { QualityInfoModal } from './components/QualityInfoModal';
