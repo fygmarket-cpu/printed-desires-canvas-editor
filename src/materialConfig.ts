@@ -106,3 +106,30 @@ export interface MaterialConfig {
     notes?: string;
   };
 }
+export const materialConfigs: Record<MaterialId, MaterialConfig> = {
+  canvas: canvasMaterial,
+  framed: framedMaterial,
+  metal: metalMaterial,
+  acrylic: acrylicMaterial,
+  poster: posterMaterial,
+};
+
+export function getMaterialConfig(
+  materialId: MaterialId
+): MaterialConfig {
+  return materialConfigs[materialId];
+}
+
+export function isMaterialId(
+  value: string
+): value is MaterialId {
+  return value in materialConfigs;
+}
+
+/**
+ * Default material.
+ *
+ * Canvas remains the default so the current
+ * editor behavior is preserved.
+ */
+export const DEFAULT_MATERIAL: MaterialId = 'canvas';
