@@ -1,162 +1,130 @@
 import {
   CanvasSize,
+  StoreConfig,
 } from './types/canvas';
-
-import {
-  CANVAS_SIZES,
-} from './data/canvasPresets';
 
 /* ============================================================
    MATERIAL TYPES
    ============================================================ */
 
-/**
- * MaterialId
- *
- * Los cinco materiales actuales tienen IDs conocidos.
- *
- * `string` permite incorporar nuevos materiales en el futuro
- * sin tener que modificar toda la arquitectura del proyecto.
- *
- * Ejemplos futuros:
- *
- *   wood
- *   glass
- *   pvc
- *   aluminum
- *   fine-art-paper
- *
- * El administrador podrá crear nuevos materiales posteriormente.
- */
 export type MaterialId =
   | 'canvas'
   | 'framed'
   | 'metal'
   | 'acrylic'
-  | 'poster'
-  | (string & {});
-
-
-/* ============================================================
-   MATERIAL SIZE
-   ============================================================ */
+  | 'poster';
 
 /**
- * MaterialSize mantiene exactamente la misma estructura
- * utilizada actualmente por CanvasSize.
+ * MaterialSize mantiene compatibilidad con CanvasSize.
  *
- * Esto mantiene compatibilidad con:
+ * IMPORTANTE:
+ * Cada material puede tener su propia lista de tamaños.
  *
- * - SizeSelector
- * - StoreConfig
- * - precios
- * - carrito
- * - Shopify
- * - preview
+ * No es obligatorio que Framed, Metal, Acrylic o Poster
+ * utilicen exactamente los mismos tamaños que Canvas.
  */
 export type MaterialSize = CanvasSize;
-
 
 /* ============================================================
    MATERIAL CONFIGURATION
    ============================================================ */
 
-/**
- * Configuración completa de un material.
- *
- * Esta estructura está diseñada para que en el futuro
- * podamos crear nuevos materiales desde Configuración
- * de Tienda sin reconstruir el sistema.
- */
 export interface MaterialConfig {
 
   /**
-   * Identificador único interno.
+   * Identificador interno del material.
    *
    * Ejemplos:
-   *
    * canvas
    * framed
    * metal
    * acrylic
    * poster
-   * wood
+   *
+   * En el futuro se podrán añadir nuevos IDs.
    */
   id: MaterialId;
-
 
   /**
    * Nombre interno.
    */
   name: string;
 
-
   /**
    * Nombre visible para el cliente.
+   *
+   * Ejemplo:
+   * Canvas Prints
+   * Metal Prints
    */
   displayName: string;
 
-
   /**
-   * Descripción comercial.
+   * Descripción comercial del material.
    */
   description: string;
 
-
   /**
-   * Shopify product handle.
+   * Handle del producto correspondiente en Shopify.
    *
    * Ejemplo:
-   *
    * canvas-prints
    */
   shopifyProductHandle?: string;
 
-
   /**
    * Tipo de preview utilizado por el editor.
    *
-   * `custom` queda reservado para futuros materiales
-   * que necesiten un comportamiento diferente.
+   * En el futuro se pueden ampliar estos tipos.
    */
   previewType:
     | 'canvas'
     | 'framed'
     | 'metal'
     | 'acrylic'
-    | 'poster'
-    | 'custom';
-
+    | 'poster';
 
   /**
-   * Imágenes utilizadas por este material.
+   * Imágenes del material.
    *
-   * Posteriormente podrán editarse desde
-   * Configuración de Tienda.
+   * main:
+   * Imagen principal.
+   *
+   * gallery:
+   * Imágenes adicionales.
    */
   images?: {
-
-    /**
-     * Imagen principal.
-     */
     main?: string;
-
-    /**
-     * Galería.
-     */
     gallery?: string[];
   };
 
-
   /**
-   * Tamaños y precios específicos
-   * de este material.
+   * ==========================================================
+   * MATERIAL-SPECIFIC SIZES
+   * ==========================================================
    *
-   * Cada material puede tener tamaños
-   * completamente diferentes.
+   * Cada material puede tener tamaños diferentes.
+   *
+   * Ejemplo:
+   *
+   * Canvas:
+   * 20x25
+   * 40x50
+   * 50x70
+   * 75x100
+   *
+   * Metal:
+   * 30x40
+   * 40x60
+   * 60x90
+   *
+   * Acrylic:
+   * otros tamaños
+   *
+   * Esto evita que todos los materiales dependan
+   * de CANVAS_SIZES.
    */
   sizes: MaterialSize[];
-
 
   /**
    * Opciones específicas del material.
@@ -165,20 +133,36 @@ export interface MaterialConfig {
 
     /**
      * Colores de marco.
+     *
+     * Ejemplo:
+     * White
+     * Wood
+     * Dark Wood
+     * Black
      */
     frameColors?: string[];
 
     /**
      * Acabados.
+     *
+     * Ejemplo:
+     * Matte
+     * Glossy
+     * Premium
      */
     finishes?: string[];
 
     /**
-     * Grosor.
+     * Espesores o variantes físicas.
+     *
+     * Ejemplo:
+     * 2 cm
+     * 4 cm
+     * 3 mm
+     * 6 mm
      */
     thicknesses?: string[];
   };
-
 
   /**
    * Configuración comercial.
@@ -196,18 +180,15 @@ export interface MaterialConfig {
     currency?: string;
 
     /**
-     * Indica si el precio depende
-     * del tamaño.
+     * Si el precio cambia según tamaño.
      */
     priceBySize?: boolean;
 
     /**
-     * Indica si el precio depende
-     * de opciones adicionales.
+     * Si el precio cambia según opciones.
      */
     priceByOption?: boolean;
   };
-
 
   /**
    * Configuración visual del preview.
@@ -215,7 +196,7 @@ export interface MaterialConfig {
   preview?: {
 
     /**
-     * Imagen de fondo del producto.
+     * Fondo utilizado en el preview.
      */
     backgroundImage?: string;
 
@@ -240,408 +221,267 @@ export interface MaterialConfig {
     showShadow?: boolean;
 
     /**
-     * Mostrar preview en habitación.
+     * Mostrar preview dentro de habitación.
      */
     showRoomPreview?: boolean;
   };
-
 
   /**
    * Textos utilizados por el editor.
    */
   ui: {
 
-    /**
-     * Título.
-     */
     title: string;
 
-    /**
-     * Subtítulo.
-     */
     subtitle: string;
 
-    /**
-     * Texto de subida.
-     */
     uploadText: string;
 
-    /**
-     * Texto selector de tamaño.
-     */
     sizeText: string;
 
-    /**
-     * Texto precio.
-     */
     priceText: string;
 
-    /**
-     * Texto botón carrito.
-     */
     addToCartText: string;
   };
 
-
   /**
-   * Configuración administrativa.
+   * ==========================================================
+   * ADMIN
+   * ==========================================================
    *
-   * No necesita mostrarse al cliente.
+   * Esta sección NO tiene que ser visible al cliente.
+   *
+   * Se utilizará posteriormente para configuración interna.
    */
   admin?: {
 
-    /**
-     * Material activo.
-     */
     enabled?: boolean;
 
-    /**
-     * Notas internas.
-     */
     notes?: string;
-
-    /**
-     * Indica si el material fue creado
-     * manualmente por el administrador.
-     *
-     * Esto queda preparado para el futuro.
-     */
-    customCreated?: boolean;
   };
 }
 
-
 /* ============================================================
-   MATERIAL-SPECIFIC SIZE DATA
+   DEFAULT SIZE DATA
    ============================================================ */
 
 /**
- * IMPORTANTE
+ * DEFAULT_SIZES
  *
- * Canvas NO utiliza estos tamaños.
+ * Esta es una base reutilizable.
  *
- * Canvas continúa utilizando:
+ * IMPORTANTE:
  *
- *     CANVAS_SIZES
+ * NO significa que todos los materiales tengan que utilizar
+ * estos tamaños.
  *
- * procedente de:
+ * Cada material puede:
  *
- *     src/data/canvasPresets.ts
+ * 1. Utilizar DEFAULT_SIZES.
  *
- * De esta forma conservamos exactamente
- * los tamaños actuales de Canvas.
+ * 2. Crear sus propios tamaños.
+ *
+ * 3. Crear una combinación de tamaños.
+ *
+ * Ejemplo futuro:
+ *
+ * sizes: [
+ *   ...DEFAULT_SIZES,
+ *   nuevoTamaño
+ * ]
  */
+export const DEFAULT_SIZES: MaterialSize[] = [
 
-
-/* ============================================================
-   FRAMED PRINTS SIZES
-   ============================================================ */
-
-export const FRAMED_SIZES: MaterialSize[] = [
+  /* ----------------------------------------------------------
+     STANDARD
+  ---------------------------------------------------------- */
 
   {
-    id: 'framed-30x40',
-    label: '30 × 40 cm',
-    widthCm: 30,
-    heightCm: 40,
-    originalPrice: 59,
-    discountedPrice: 44,
-    discountPercent: 25,
-    category: 'Standard',
-  },
+    id: '50x70',
 
-  {
-    id: 'framed-40x50',
-    label: '40 × 50 cm',
-    widthCm: 40,
-    heightCm: 50,
-    originalPrice: 79,
-    discountedPrice: 59,
-    discountPercent: 25,
-    category: 'Standard',
-    isBestSeller: true,
-  },
-
-  {
-    id: 'framed-50x70',
     label: '50 × 70 cm',
+
     widthCm: 50,
+
     heightCm: 70,
-    originalPrice: 109,
-    discountedPrice: 79,
-    discountPercent: 28,
-    category: 'Large',
-  },
 
-  {
-    id: 'framed-60x80',
-    label: '60 × 80 cm',
-    widthCm: 60,
-    heightCm: 80,
-    originalPrice: 139,
-    discountedPrice: 99,
-    discountPercent: 29,
-    category: 'Large',
-  },
+    originalPrice: 89,
 
-  {
-    id: 'framed-70x100',
-    label: '70 × 100 cm',
-    widthCm: 70,
-    heightCm: 100,
-    originalPrice: 179,
-    discountedPrice: 129,
-    discountPercent: 28,
-    category: 'Premium',
-  },
-
-  {
-    id: 'framed-80x120',
-    label: '80 × 120 cm',
-    widthCm: 80,
-    heightCm: 120,
-    originalPrice: 219,
-    discountedPrice: 159,
-    discountPercent: 27,
-    category: 'Premium',
-  },
-];
-
-
-/* ============================================================
-   METAL PRINTS SIZES
-   ============================================================ */
-
-export const METAL_SIZES: MaterialSize[] = [
-
-  {
-    id: 'metal-20x30',
-    label: '20 × 30 cm',
-    widthCm: 20,
-    heightCm: 30,
-    originalPrice: 49,
-    discountedPrice: 35,
-    discountPercent: 29,
-    category: 'Small',
-  },
-
-  {
-    id: 'metal-30x40',
-    label: '30 × 40 cm',
-    widthCm: 30,
-    heightCm: 40,
-    originalPrice: 69,
-    discountedPrice: 49,
-    discountPercent: 29,
-    category: 'Standard',
-  },
-
-  {
-    id: 'metal-40x60',
-    label: '40 × 60 cm',
-    widthCm: 40,
-    heightCm: 60,
-    originalPrice: 99,
     discountedPrice: 69,
-    discountPercent: 30,
+
+    discountPercent: 22,
+
     category: 'Standard',
-    isBestSeller: true,
   },
 
   {
-    id: 'metal-50x70',
-    label: '50 × 70 cm',
-    widthCm: 50,
-    heightCm: 70,
-    originalPrice: 129,
+    id: '60x90',
+
+    label: '60 × 90 cm',
+
+    widthCm: 60,
+
+    heightCm: 90,
+
+    originalPrice: 119,
+
     discountedPrice: 89,
-    discountPercent: 31,
-    category: 'Large',
-  },
 
-  {
-    id: 'metal-60x90',
-    label: '60 × 90 cm',
-    widthCm: 60,
-    heightCm: 90,
-    originalPrice: 159,
-    discountedPrice: 109,
-    discountPercent: 31,
-    category: 'Large',
-  },
+    discountPercent: 25,
 
-  {
-    id: 'metal-80x120',
-    label: '80 × 120 cm',
-    widthCm: 80,
-    heightCm: 120,
-    originalPrice: 219,
-    discountedPrice: 149,
-    discountPercent: 32,
-    category: 'Premium',
-  },
-];
-
-
-/* ============================================================
-   ACRYLIC PRINTS SIZES
-   ============================================================ */
-
-export const ACRYLIC_SIZES: MaterialSize[] = [
-
-  {
-    id: 'acrylic-20x30',
-    label: '20 × 30 cm',
-    widthCm: 20,
-    heightCm: 30,
-    originalPrice: 69,
-    discountedPrice: 49,
-    discountPercent: 29,
-    category: 'Small',
-  },
-
-  {
-    id: 'acrylic-30x40',
-    label: '30 × 40 cm',
-    widthCm: 30,
-    heightCm: 40,
-    originalPrice: 89,
-    discountedPrice: 64,
-    discountPercent: 28,
     category: 'Standard',
   },
 
-  {
-    id: 'acrylic-40x60',
-    label: '40 × 60 cm',
-    widthCm: 40,
-    heightCm: 60,
-    originalPrice: 129,
-    discountedPrice: 89,
-    discountPercent: 31,
-    category: 'Standard',
-    isBestSeller: true,
-  },
+  /* ----------------------------------------------------------
+     LARGE
+  ---------------------------------------------------------- */
 
   {
-    id: 'acrylic-50x70',
-    label: '50 × 70 cm',
-    widthCm: 50,
-    heightCm: 70,
-    originalPrice: 169,
-    discountedPrice: 119,
-    discountPercent: 30,
-    category: 'Large',
-  },
+    id: '75x100',
 
-  {
-    id: 'acrylic-60x90',
-    label: '60 × 90 cm',
-    widthCm: 60,
-    heightCm: 90,
-    originalPrice: 209,
-    discountedPrice: 149,
-    discountPercent: 29,
-    category: 'Large',
-  },
+    label: '75 × 100 cm',
 
-  {
-    id: 'acrylic-80x120',
-    label: '80 × 120 cm',
-    widthCm: 80,
-    heightCm: 120,
-    originalPrice: 289,
-    discountedPrice: 199,
-    discountPercent: 31,
-    category: 'Premium',
-  },
-];
+    widthCm: 75,
 
-
-/* ============================================================
-   POSTER PRINTS SIZES
-   ============================================================ */
-
-export const POSTER_SIZES: MaterialSize[] = [
-
-  {
-    id: 'poster-20x30',
-    label: '20 × 30 cm',
-    widthCm: 20,
-    heightCm: 30,
-    originalPrice: 29,
-    discountedPrice: 19,
-    discountPercent: 34,
-    category: 'Small',
-  },
-
-  {
-    id: 'poster-30x40',
-    label: '30 × 40 cm',
-    widthCm: 30,
-    heightCm: 40,
-    originalPrice: 39,
-    discountedPrice: 27,
-    discountPercent: 31,
-    category: 'Standard',
-  },
-
-  {
-    id: 'poster-40x50',
-    label: '40 × 50 cm',
-    widthCm: 40,
-    heightCm: 50,
-    originalPrice: 49,
-    discountedPrice: 34,
-    discountPercent: 31,
-    category: 'Standard',
-    isBestSeller: true,
-  },
-
-  {
-    id: 'poster-50x70',
-    label: '50 × 70 cm',
-    widthCm: 50,
-    heightCm: 70,
-    originalPrice: 69,
-    discountedPrice: 49,
-    discountPercent: 29,
-    category: 'Large',
-  },
-
-  {
-    id: 'poster-60x90',
-    label: '60 × 90 cm',
-    widthCm: 60,
-    heightCm: 90,
-    originalPrice: 89,
-    discountedPrice: 64,
-    discountPercent: 28,
-    category: 'Large',
-  },
-
-  {
-    id: 'poster-70x100',
-    label: '70 × 100 cm',
-    widthCm: 70,
     heightCm: 100,
-    originalPrice: 109,
-    discountedPrice: 79,
+
+    originalPrice: 149,
+
+    discountedPrice: 109,
+
+    discountPercent: 27,
+
+    category: 'Large',
+
+    isBestSeller: true,
+  },
+
+  {
+    id: '80x120',
+
+    label: '80 × 120 cm',
+
+    widthCm: 80,
+
+    heightCm: 120,
+
+    originalPrice: 179,
+
+    discountedPrice: 129,
+
     discountPercent: 28,
+
+    category: 'Large',
+  },
+
+  /* ----------------------------------------------------------
+     PREMIUM
+  ---------------------------------------------------------- */
+
+  {
+    id: '100x150',
+
+    label: '100 × 150 cm',
+
+    widthCm: 100,
+
+    heightCm: 150,
+
+    originalPrice: 239,
+
+    discountedPrice: 179,
+
+    discountPercent: 25,
+
     category: 'Premium',
   },
 ];
 
-
 /* ============================================================
-   CANVAS MATERIAL
+   CANVAS SIZES
    ============================================================ */
 
 /**
- * Canvas utiliza los tamaños originales del proyecto.
+ * Canvas utiliza DEFAULT_SIZES como configuración inicial.
  *
- * NO se duplican aquí.
+ * Se crea una copia para evitar compartir accidentalmente
+ * el mismo array entre diferentes materiales.
  */
+export const CANVAS_SIZES: MaterialSize[] =
+  DEFAULT_SIZES.map((size) => ({
+    ...size,
+  }));
+
+/* ============================================================
+   FRAMED SIZES
+   ============================================================ */
+
+/**
+ * Framed Prints
+ *
+ * Preparado para tener tamaños independientes.
+ *
+ * Actualmente utiliza una copia de DEFAULT_SIZES.
+ *
+ * Más adelante puedes modificar solamente este array.
+ */
+export const FRAMED_SIZES: MaterialSize[] =
+  DEFAULT_SIZES.map((size) => ({
+    ...size,
+  }));
+
+/* ============================================================
+   METAL SIZES
+   ============================================================ */
+
+/**
+ * Metal Prints
+ *
+ * También tiene su propia colección.
+ *
+ * Puedes cambiar estos tamaños sin afectar Canvas.
+ */
+export const METAL_SIZES: MaterialSize[] =
+  DEFAULT_SIZES.map((size) => ({
+    ...size,
+  }));
+
+/* ============================================================
+   ACRYLIC SIZES
+   ============================================================ */
+
+/**
+ * Acrylic Prints
+ *
+ * Configuración independiente.
+ */
+export const ACRYLIC_SIZES: MaterialSize[] =
+  DEFAULT_SIZES.map((size) => ({
+    ...size,
+  }));
+
+/* ============================================================
+   POSTER SIZES
+   ============================================================ */
+
+/**
+ * Poster Prints
+ *
+ * Configuración independiente.
+ */
+export const POSTER_SIZES: MaterialSize[] =
+  DEFAULT_SIZES.map((size) => ({
+    ...size,
+  }));
+
+/* ============================================================
+   MATERIAL FACTORIES
+   ============================================================ */
+
+/* ============================================================
+   CANVAS
+   ============================================================ */
+
 export const canvasMaterial: MaterialConfig = {
 
   id: 'canvas',
@@ -653,16 +493,22 @@ export const canvasMaterial: MaterialConfig = {
   description:
     'Impresión fotográfica premium sobre lienzo de algodón con acabado artístico.',
 
-  shopifyProductHandle: 'canvas-prints',
+  shopifyProductHandle:
+    'canvas-prints',
 
-  previewType: 'canvas',
+  previewType:
+    'canvas',
 
   images: {
     main: '',
     gallery: [],
   },
 
-  sizes: CANVAS_SIZES,
+  /**
+   * Canvas tiene sus propios tamaños.
+   */
+  sizes:
+    CANVAS_SIZES,
 
   options: {
 
@@ -681,7 +527,7 @@ export const canvasMaterial: MaterialConfig = {
 
   pricing: {
 
-    basePrice: 0,
+    basePrice: 69,
 
     currency: 'EUR',
 
@@ -707,7 +553,8 @@ export const canvasMaterial: MaterialConfig = {
 
   ui: {
 
-    title: 'Canvas Prints',
+    title:
+      'Canvas Prints',
 
     subtitle:
       'Convierte tus fotografías en arte mural personalizado.',
@@ -730,13 +577,12 @@ export const canvasMaterial: MaterialConfig = {
     enabled: true,
 
     notes:
-      'Canvas utiliza CANVAS_SIZES desde canvasPresets.ts. Los precios se mantienen configurables.',
+      'Configuración editable del producto Canvas. Los tamaños y precios pueden modificarse independientemente de los demás materiales.',
   },
 };
 
-
 /* ============================================================
-   FRAMED MATERIAL
+   FRAMED
    ============================================================ */
 
 export const framedMaterial: MaterialConfig = {
@@ -750,16 +596,24 @@ export const framedMaterial: MaterialConfig = {
   description:
     'Impresiones premium presentadas en un elegante marco decorativo.',
 
-  shopifyProductHandle: 'framed-prints',
+  shopifyProductHandle:
+    'framed-prints',
 
-  previewType: 'framed',
+  previewType:
+    'framed',
 
   images: {
+
     main: '',
+
     gallery: [],
   },
 
-  sizes: FRAMED_SIZES,
+  /**
+   * Framed tiene su propia colección.
+   */
+  sizes:
+    FRAMED_SIZES,
 
   options: {
 
@@ -783,7 +637,7 @@ export const framedMaterial: MaterialConfig = {
 
   pricing: {
 
-    basePrice: 0,
+    basePrice: 89,
 
     currency: 'EUR',
 
@@ -809,7 +663,8 @@ export const framedMaterial: MaterialConfig = {
 
   ui: {
 
-    title: 'Framed Prints',
+    title:
+      'Framed Prints',
 
     subtitle:
       'Tu fotografía personalizada terminada con un marco elegante.',
@@ -832,13 +687,12 @@ export const framedMaterial: MaterialConfig = {
     enabled: true,
 
     notes:
-      'Framed Prints utiliza tamaños independientes de Canvas.',
+      'Configuración editable de Framed Prints. Los tamaños son independientes de Canvas.',
   },
 };
 
-
 /* ============================================================
-   METAL MATERIAL
+   METAL
    ============================================================ */
 
 export const metalMaterial: MaterialConfig = {
@@ -852,16 +706,24 @@ export const metalMaterial: MaterialConfig = {
   description:
     'Impresión fotográfica de alta definición sobre panel metálico.',
 
-  shopifyProductHandle: 'metal-prints',
+  shopifyProductHandle:
+    'metal-prints',
 
-  previewType: 'metal',
+  previewType:
+    'metal',
 
   images: {
+
     main: '',
+
     gallery: [],
   },
 
-  sizes: METAL_SIZES,
+  /**
+   * Metal tiene su propia colección.
+   */
+  sizes:
+    METAL_SIZES,
 
   options: {
 
@@ -879,7 +741,7 @@ export const metalMaterial: MaterialConfig = {
 
   pricing: {
 
-    basePrice: 0,
+    basePrice: 79,
 
     currency: 'EUR',
 
@@ -905,7 +767,8 @@ export const metalMaterial: MaterialConfig = {
 
   ui: {
 
-    title: 'Metal Prints',
+    title:
+      'Metal Prints',
 
     subtitle:
       'Colores intensos y acabado contemporáneo sobre metal.',
@@ -928,13 +791,12 @@ export const metalMaterial: MaterialConfig = {
     enabled: true,
 
     notes:
-      'Metal Prints utiliza tamaños independientes de Canvas.',
+      'Configuración editable de Metal Prints. Los tamaños son independientes de Canvas.',
   },
 };
 
-
 /* ============================================================
-   ACRYLIC MATERIAL
+   ACRYLIC
    ============================================================ */
 
 export const acrylicMaterial: MaterialConfig = {
@@ -948,16 +810,24 @@ export const acrylicMaterial: MaterialConfig = {
   description:
     'Fotografía de alta definición con acabado acrílico elegante y moderno.',
 
-  shopifyProductHandle: 'acrylic-prints',
+  shopifyProductHandle:
+    'acrylic-prints',
 
-  previewType: 'acrylic',
+  previewType:
+    'acrylic',
 
   images: {
+
     main: '',
+
     gallery: [],
   },
 
-  sizes: ACRYLIC_SIZES,
+  /**
+   * Acrylic tiene su propia colección.
+   */
+  sizes:
+    ACRYLIC_SIZES,
 
   options: {
 
@@ -976,7 +846,7 @@ export const acrylicMaterial: MaterialConfig = {
 
   pricing: {
 
-    basePrice: 0,
+    basePrice: 99,
 
     currency: 'EUR',
 
@@ -1002,7 +872,8 @@ export const acrylicMaterial: MaterialConfig = {
 
   ui: {
 
-    title: 'Acrylic Prints',
+    title:
+      'Acrylic Prints',
 
     subtitle:
       'Un acabado moderno y luminoso para tus fotografías.',
@@ -1025,13 +896,12 @@ export const acrylicMaterial: MaterialConfig = {
     enabled: true,
 
     notes:
-      'Acrylic Prints utiliza tamaños independientes de Canvas.',
+      'Configuración editable de Acrylic Prints. Los tamaños son independientes de Canvas.',
   },
 };
 
-
 /* ============================================================
-   POSTER MATERIAL
+   POSTER
    ============================================================ */
 
 export const posterMaterial: MaterialConfig = {
@@ -1045,16 +915,24 @@ export const posterMaterial: MaterialConfig = {
   description:
     'Impresiones artísticas de alta calidad para decoración mural.',
 
-  shopifyProductHandle: 'poster-prints',
+  shopifyProductHandle:
+    'poster-prints',
 
-  previewType: 'poster',
+  previewType:
+    'poster',
 
   images: {
+
     main: '',
+
     gallery: [],
   },
 
-  sizes: POSTER_SIZES,
+  /**
+   * Poster tiene su propia colección.
+   */
+  sizes:
+    POSTER_SIZES,
 
   options: {
 
@@ -1076,7 +954,7 @@ export const posterMaterial: MaterialConfig = {
 
   pricing: {
 
-    basePrice: 0,
+    basePrice: 39,
 
     currency: 'EUR',
 
@@ -1102,7 +980,8 @@ export const posterMaterial: MaterialConfig = {
 
   ui: {
 
-    title: 'Poster Prints',
+    title:
+      'Poster Prints',
 
     subtitle:
       'Arte mural personalizado con impresión de alta calidad.',
@@ -1125,44 +1004,41 @@ export const posterMaterial: MaterialConfig = {
     enabled: true,
 
     notes:
-      'Poster Prints utiliza tamaños independientes de Canvas.',
+      'Configuración editable de Poster Prints. Los tamaños son independientes de Canvas.',
   },
 };
-
 
 /* ============================================================
    MATERIAL CONFIG COLLECTION
    ============================================================ */
 
-/**
- * Todos los materiales actuales.
- *
- * Esta colección es la fuente central de materiales.
- *
- * En el futuro un nuevo material podrá incorporarse
- * aquí sin tener que modificar Header, App o SizeSelector.
- */
-export const materialConfigs: Record<
-  MaterialId,
-  MaterialConfig
-> = {
+export const materialConfigs:
+  Record<MaterialId, MaterialConfig> = {
 
-  canvas: canvasMaterial,
+  canvas:
+    canvasMaterial,
 
-  framed: framedMaterial,
+  framed:
+    framedMaterial,
 
-  metal: metalMaterial,
+  metal:
+    metalMaterial,
 
-  acrylic: acrylicMaterial,
+  acrylic:
+    acrylicMaterial,
 
-  poster: posterMaterial,
+  poster:
+    posterMaterial,
 };
-
 
 /* ============================================================
    GET MATERIAL CONFIG
    ============================================================ */
 
+/**
+ * Devuelve la configuración completa
+ * de un material.
+ */
 export function getMaterialConfig(
   materialId: MaterialId
 ): MaterialConfig {
@@ -1170,39 +1046,36 @@ export function getMaterialConfig(
   return materialConfigs[materialId];
 }
 
-
 /* ============================================================
    MATERIAL ID VALIDATION
    ============================================================ */
 
 /**
- * Comprueba si existe un material.
- *
- * Como MaterialId permite materiales personalizados,
- * esta función consulta directamente la colección.
+ * Comprueba si un valor corresponde
+ * a un material válido.
  */
 export function isMaterialId(
   value: string
 ): value is MaterialId {
 
   return (
-    typeof value === 'string' &&
-    value.length > 0 &&
-    value in materialConfigs
+    value === 'canvas' ||
+    value === 'framed' ||
+    value === 'metal' ||
+    value === 'acrylic' ||
+    value === 'poster'
   );
 }
-
 
 /* ============================================================
    DEFAULT MATERIAL
    ============================================================ */
 
 /**
- * Canvas continúa siendo el material predeterminado.
+ * Canvas permanece como material inicial.
  */
-export const DEFAULT_MATERIAL: MaterialId =
-  'canvas';
-
+export const DEFAULT_MATERIAL:
+  MaterialId = 'canvas';
 
 /* ============================================================
    MATERIAL HELPERS
@@ -1214,95 +1087,113 @@ export const DEFAULT_MATERIAL: MaterialId =
 export function getAllMaterialConfigs():
   MaterialConfig[] {
 
-  return Object.values(materialConfigs);
+  return Object.values(
+    materialConfigs
+  );
 }
-
 
 /**
  * Devuelve los tamaños configurados
- * para un material.
+ * para un material concreto.
  */
 export function getMaterialSizes(
   materialId: MaterialId
 ): MaterialSize[] {
 
-  return (
-    materialConfigs[materialId]?.sizes ||
-    []
-  );
+  return materialConfigs[
+    materialId
+  ].sizes;
 }
 
-
 /**
- * Devuelve el precio base de un material.
+ * Devuelve el precio base
+ * de un material.
  */
 export function getMaterialBasePrice(
   materialId: MaterialId
 ): number {
 
   return (
-    materialConfigs[materialId]
-      ?.pricing
-      ?.basePrice ?? 0
+    materialConfigs[
+      materialId
+    ].pricing?.basePrice || 0
   );
 }
-
-
-/**
- * Comprueba si un material está habilitado.
- */
-export function isMaterialEnabled(
-  materialId: MaterialId
-): boolean {
-
-  return (
-    materialConfigs[materialId]
-      ?.admin
-      ?.enabled !== false
-  );
-}
-
 
 /* ============================================================
-   MATERIAL REGISTRATION
+   FUTURE MATERIAL SUPPORT
    ============================================================ */
 
 /**
- * Registra un nuevo material.
+ * ============================================================
+ * NUEVOS MATERIALES
+ * ============================================================
  *
- * Esta función queda preparada para la futura
- * Configuración de Tienda.
+ * IMPORTANTE:
  *
- * Ejemplo futuro:
+ * Por ahora MaterialId está limitado a los 5 materiales
+ * actuales.
  *
- * registerMaterial({
- *   id: 'wood',
- *   name: 'wood',
- *   displayName: 'Wood Prints',
- *   ...
- * });
+ * Cuando quieras agregar un nuevo material, por ejemplo:
+ *
+ *   wood
+ *
+ * tendrás que agregar:
+ *
+ *   | 'wood'
+ *
+ * a MaterialId y después crear:
+ *
+ *   export const woodMaterial: MaterialConfig = {...}
+ *
+ * y finalmente añadirlo a materialConfigs:
+ *
+ *   wood: woodMaterial
+ *
+ * ============================================================
+ *
+ * La estructura de MaterialConfig ya está preparada para
+ * que un futuro material pueda definir:
+ *
+ * - nombre
+ * - descripción
+ * - Shopify handle
+ * - tipo de preview
+ * - imágenes
+ * - tamaños propios
+ * - colores
+ * - acabados
+ * - espesores
+ * - precio base
+ * - precio por tamaño
+ * - precio por opción
+ * - imagen de habitación
+ * - preview
+ * - textos
+ * - notas administrativas
+ *
+ * Esto permitirá que el futuro panel de Configuración
+ * de Tienda pueda crear/configurar materiales sin tener
+ * que cambiar la arquitectura del producto.
+ *
+ * ============================================================
  */
-export function registerMaterial(
-  material: MaterialConfig
-): MaterialConfig {
-
-  materialConfigs[material.id] =
-    material;
-
-  return material;
-}
-
 
 /* ============================================================
-   MATERIAL UPDATE
+   UPDATE MATERIAL CONFIG
    ============================================================ */
 
 /**
  * Actualiza una configuración de material
  * de forma inmutable.
  *
- * Esta función será utilizada posteriormente
- * por Configuración de Tienda.
+ * NOTA:
+ *
+ * Esta función está preparada para la futura
+ * Configuración de Tienda.
+ *
+ * En este momento materialConfigs es un objeto
+ * local en memoria.
  */
 export function updateMaterialConfig(
   materialId: MaterialId,
@@ -1310,93 +1201,89 @@ export function updateMaterialConfig(
 ): MaterialConfig {
 
   const current =
-    materialConfigs[materialId];
-
-  if (!current) {
-    throw new Error(
-      `Material "${materialId}" no existe.`
-    );
-  }
+    materialConfigs[
+      materialId
+    ];
 
   const updated: MaterialConfig = {
 
     ...current,
 
     ...updates,
-
-    /**
-     * Mantiene el ID original para evitar
-     * inconsistencias internas.
-     */
-    id: current.id,
   };
 
-  materialConfigs[materialId] =
-    updated;
+  materialConfigs[
+    materialId
+  ] = updated;
 
   return updated;
 }
 
-
 /* ============================================================
-   CREATE MATERIAL
+   CREATE MATERIAL TEMPLATE
    ============================================================ */
 
 /**
- * Crea un nuevo material utilizando valores
- * razonables por defecto.
+ * Plantilla para crear un nuevo material
+ * desde el futuro panel administrativo.
  *
- * Esto NO necesita utilizarse todavía desde
- * la interfaz de usuario.
+ * Actualmente NO registra automáticamente
+ * el material porque MaterialId es un tipo
+ * cerrado para mantener seguridad TypeScript.
  *
- * Queda preparado para una futura pantalla:
- *
- * Configuración → Materiales → Agregar material
+ * Esta función devuelve una configuración
+ * inicial que después puede registrarse.
  */
-export function createMaterialConfig(
-  material: Partial<MaterialConfig> & {
+export function createMaterialTemplate(
+  data: Partial<MaterialConfig> & {
     id: MaterialId;
     name: string;
     displayName: string;
   }
 ): MaterialConfig {
 
-  const newMaterial: MaterialConfig = {
+  const template: MaterialConfig = {
 
-    id: material.id,
+    id:
+      data.id,
 
-    name: material.name,
+    name:
+      data.name,
 
     displayName:
-      material.displayName,
+      data.displayName,
 
     description:
-      material.description || '',
+      data.description ||
+      '',
 
     shopifyProductHandle:
-      material.shopifyProductHandle,
+      data.shopifyProductHandle,
 
     previewType:
-      material.previewType || 'custom',
+      data.previewType ||
+      'canvas',
 
     images:
-      material.images || {
+      data.images || {
         main: '',
         gallery: [],
       },
 
     sizes:
-      material.sizes || [],
+      data.sizes
+        ? [...data.sizes]
+        : [],
 
     options:
-      material.options || {
+      data.options || {
         frameColors: [],
         finishes: [],
         thicknesses: [],
       },
 
     pricing:
-      material.pricing || {
+      data.pricing || {
         basePrice: 0,
         currency: 'EUR',
         priceBySize: true,
@@ -1404,7 +1291,7 @@ export function createMaterialConfig(
       },
 
     preview:
-      material.preview || {
+      data.preview || {
         backgroundImage: '',
         roomImage: '',
         frameThickness: 0,
@@ -1414,72 +1301,197 @@ export function createMaterialConfig(
       },
 
     ui:
-      material.ui || {
-        title: material.displayName,
-        subtitle: '',
-        uploadText: 'Upload your photo',
-        sizeText: 'Choose your size',
-        priceText: 'Price',
-        addToCartText: 'Add to cart',
+      data.ui || {
+
+        title:
+          data.displayName,
+
+        subtitle:
+          '',
+
+        uploadText:
+          'Upload your photo',
+
+        sizeText:
+          'Choose your size',
+
+        priceText:
+          'Price',
+
+        addToCartText:
+          'Add to cart',
       },
 
     admin:
-      material.admin || {
+      data.admin || {
         enabled: true,
-        customCreated: true,
         notes: '',
       },
   };
 
-  materialConfigs[
-    newMaterial.id
-  ] = newMaterial;
-
-  return newMaterial;
+  return template;
 }
 
-
 /* ============================================================
-   REMOVE MATERIAL
+   CLONE MATERIAL SIZES
    ============================================================ */
 
 /**
- * Elimina un material personalizado.
+ * Crea una copia independiente de los tamaños
+ * de un material.
  *
- * Por seguridad, los cinco materiales originales
- * no se eliminan mediante esta función.
+ * Esto será útil cuando quieras crear un nuevo material
+ * basándote en otro.
+ *
+ * Ejemplo futuro:
+ *
+ * const newSizes =
+ *   cloneMaterialSizes('canvas');
  */
-export function removeMaterial(
+export function cloneMaterialSizes(
   materialId: MaterialId
-): boolean {
+): MaterialSize[] {
 
-  const protectedMaterials: MaterialId[] = [
-    'canvas',
-    'framed',
-    'metal',
-    'acrylic',
-    'poster',
-  ];
-
-  if (
-    protectedMaterials.includes(
-      materialId
-    )
-  ) {
-
-    return false;
-  }
-
-  if (
-    !materialConfigs[materialId]
-  ) {
-
-    return false;
-  }
-
-  delete materialConfigs[
+  return materialConfigs[
     materialId
+  ].sizes.map((size) => ({
+    ...size,
+  }));
+}
+
+/* ============================================================
+   ADD SIZE TO MATERIAL
+   ============================================================ */
+
+/**
+ * Añade un nuevo tamaño a un material.
+ *
+ * Se utiliza una copia del array para evitar
+ * modificar accidentalmente otras configuraciones.
+ */
+export function addMaterialSize(
+  materialId: MaterialId,
+  size: MaterialSize
+): MaterialSize[] {
+
+  const currentSizes =
+    materialConfigs[
+      materialId
+    ].sizes;
+
+  const updatedSizes = [
+    ...currentSizes,
+    {
+      ...size,
+    },
   ];
 
-  return true;
+  materialConfigs[
+    materialId
+  ] = {
+    ...materialConfigs[
+      materialId
+    ],
+
+    sizes:
+      updatedSizes,
+  };
+
+  return updatedSizes;
+}
+
+/* ============================================================
+   REMOVE SIZE FROM MATERIAL
+   ============================================================ */
+
+/**
+ * Elimina un tamaño de un material
+ * utilizando su ID.
+ */
+export function removeMaterialSize(
+  materialId: MaterialId,
+  sizeId: string
+): MaterialSize[] {
+
+  const currentSizes =
+    materialConfigs[
+      materialId
+    ].sizes;
+
+  const updatedSizes =
+    currentSizes.filter(
+      (size) =>
+        size.id !== sizeId
+    );
+
+  materialConfigs[
+    materialId
+  ] = {
+
+    ...materialConfigs[
+      materialId
+    ],
+
+    sizes:
+      updatedSizes,
+  };
+
+  return updatedSizes;
+}
+
+/* ============================================================
+   UPDATE MATERIAL SIZE
+   ============================================================ */
+
+/**
+ * Edita un tamaño existente.
+ *
+ * Ejemplo:
+ *
+ * actualizar precio
+ * cambiar nombre
+ * cambiar dimensiones
+ * cambiar descuento
+ */
+export function updateMaterialSize(
+  materialId: MaterialId,
+  sizeId: string,
+  updates: Partial<MaterialSize>
+): MaterialSize[] {
+
+  const currentSizes =
+    materialConfigs[
+      materialId
+    ].sizes;
+
+  const updatedSizes =
+    currentSizes.map(
+      (size) => {
+
+        if (
+          size.id !== sizeId
+        ) {
+          return size;
+        }
+
+        return {
+          ...size,
+          ...updates,
+        };
+      }
+    );
+
+  materialConfigs[
+    materialId
+  ] = {
+
+    ...materialConfigs[
+      materialId
+    ],
+
+    sizes:
+      updatedSizes,
+  };
+
+  return updatedSizes;
 }
