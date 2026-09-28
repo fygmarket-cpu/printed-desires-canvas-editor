@@ -21,7 +21,12 @@ import { ImageModal } from './components/ImageModal';
 import { CartDrawer } from './components/CartDrawer';
 import { QualityInfoModal } from './components/QualityInfoModal';
 import { ShopifyCodeModal } from './components/ShopifyCodeModal';
-import { MaterialId, DEFAULT_MATERIAL } from './materialConfig'
+import {
+  MaterialId,
+  MaterialConfig,
+  DEFAULT_MATERIAL,
+  materialConfigs,
+} from './materialConfig';
 
 import {
   Check,
@@ -32,10 +37,39 @@ import {
 } from 'lucide-react';
 
 const STORAGE_KEY = 'printed_desires_store_config_v2';
-
+const MATERIAL_CONFIG_STORAGE_KEY =
+  'printed_desires_material_configs_v1';
 export default function App() {
-    const [selectedMaterial, setSelectedMaterial] =
+
+  // ============================================================
+  // MATERIAL
+  // ============================================================
+
+  const [selectedMaterial, setSelectedMaterial] =
     useState<MaterialId>(DEFAULT_MATERIAL);
+   // ============================================================
+  // MATERIAL CONFIGURATION
+  // ============================================================
+
+  const [materialConfigState, setMaterialConfigState] =
+    useState<Record<MaterialId, MaterialConfig>>(() => {
+      try {
+        const saved = localStorage.getItem(
+          MATERIAL_CONFIG_STORAGE_KEY
+        );
+
+        if (saved) {
+          return JSON.parse(saved);
+        }
+      } catch (e) {
+        console.error(
+          'Error loading material configuration',
+          e
+        );
+      }
+
+      return materialConfigs;
+    });
   // ============================================================
   // STORE CONFIG
   // ============================================================
@@ -70,7 +104,23 @@ export default function App() {
       );
     }
   }, [storeConfig]);
+  // ============================================================
+  // SAVE MATERIAL CONFIGURATION
+  // ============================================================
 
+  useEffect(() => {
+    try {
+      localStorage.setItem(
+        MATERIAL_CONFIG_STORAGE_KEY,
+        JSON.stringify(materialConfigState)
+      );
+    } catch (e) {
+      console.error(
+        'Error saving material configuration',
+        e
+      );
+    }
+  }, [materialConfigState]);
   // ============================================================
   // CURRENCY
   // ============================================================
@@ -100,6 +150,12 @@ export default function App() {
   const handleSelectMaterial = (material: MaterialId) => {
     setSelectedMaterial(material);
   };
+    // ============================================================
+  // ACTIVE MATERIAL CONFIG
+  // ============================================================
+
+  const activeMaterialConfig =
+    materialConfigState[selectedMaterial];
   // ============================================================
   // INITIAL CANVAS
   // ============================================================
@@ -474,10 +530,35 @@ export default function App() {
 
       <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-10">
         
-        {/* TEMPORARY MATERIAL TEST */}
-        <div className="mb-4 rounded-lg border border-[#B99A62] bg-[#FFFFFF] px-4 py-3 text-sm text-[#4A352B]">
-          Material seleccionado: <strong>{selectedMaterial}</strong>
-        </div>
+      {/* ======================================================
+    ACTIVE MATERIAL
+====================================================== */}
+
+<div className="mb-4 rounded-xl border border-[#E7E1D8] bg-white px-4 py-3 shadow-luxury-sm">
+
+  <div className="flex items-center justify-between gap-4">
+
+    <div>
+      <p className="text-[10px] uppercase tracking-[0.18em] text-[#B99A62] font-bold">
+        Printed Desires Wall Art
+      </p>
+
+      <h2 className="mt-1 text-base sm:text-lg font-semibold text-[#171513]">
+        {activeMaterialConfig.displayName}
+      </h2>
+
+      <p className="mt-1 text-xs text-[#4A352B]/70">
+        {activeMaterialConfig.description}
+      </p>
+    </div>
+
+    <div className="shrink-0 text-xs font-semibold text-[#4A352B]">
+      {selectedMaterial}
+    </div>
+
+  </div>
+
+</div>
        
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8 items-start">
 
