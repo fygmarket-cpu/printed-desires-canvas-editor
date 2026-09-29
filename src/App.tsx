@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+
 import {
   CanvasCustomization,
   CanvasSize,
@@ -21,6 +22,7 @@ import { ImageModal } from './components/ImageModal';
 import { CartDrawer } from './components/CartDrawer';
 import { QualityInfoModal } from './components/QualityInfoModal';
 import { ShopifyCodeModal } from './components/ShopifyCodeModal';
+
 import {
   MaterialId,
   MaterialConfig,
@@ -36,20 +38,35 @@ import {
   Award,
 } from 'lucide-react';
 
-const STORAGE_KEY = 'printed_desires_store_config_v2';
+/* ============================================================
+   STORAGE
+   ============================================================ */
+
+const STORAGE_KEY =
+  'printed_desires_store_config_v2';
+
 const MATERIAL_CONFIG_STORAGE_KEY =
   'printed_desires_material_configs_v1';
+
+/* ============================================================
+   APP
+   ============================================================ */
+
 export default function App() {
 
-  // ============================================================
-  // MATERIAL
-  // ============================================================
+  /* ==========================================================
+     MATERIAL
+  ========================================================== */
 
   const [selectedMaterial, setSelectedMaterial] =
     useState<MaterialId>(DEFAULT_MATERIAL);
-   // ============================================================
-  // MATERIAL CONFIGURATION
-  // ============================================================
+
+  /* ==========================================================
+     MATERIAL CONFIGURATION
+     
+     Cada material mantiene su propia configuración.
+     Esto permitirá añadir nuevos materiales posteriormente.
+  ========================================================== */
 
   const [materialConfigState, setMaterialConfigState] =
     useState<Record<MaterialId, MaterialConfig>>(() => {
@@ -61,35 +78,42 @@ export default function App() {
         if (saved) {
           return JSON.parse(saved);
         }
-      } catch (e) {
+      } catch (error) {
         console.error(
           'Error loading material configuration',
-          e
+          error
         );
       }
 
       return materialConfigs;
     });
-  // ============================================================
-  // STORE CONFIG
-  // ============================================================
 
-  const [storeConfig, setStoreConfig] = useState<StoreConfig>(() => {
-    try {
-      const saved = localStorage.getItem(STORAGE_KEY);
+  /* ==========================================================
+     STORE CONFIGURATION
+  ========================================================== */
 
-      if (saved) {
-        return JSON.parse(saved);
+  const [storeConfig, setStoreConfig] =
+    useState<StoreConfig>(() => {
+      try {
+        const saved =
+          localStorage.getItem(STORAGE_KEY);
+
+        if (saved) {
+          return JSON.parse(saved);
+        }
+      } catch (error) {
+        console.error(
+          'Error loading store config from localStorage',
+          error
+        );
       }
-    } catch (e) {
-      console.error(
-        'Error loading store config from localStorage',
-        e
-      );
-    }
 
-    return DEFAULT_STORE_CONFIG;
-  });
+      return DEFAULT_STORE_CONFIG;
+    });
+
+  /* ==========================================================
+     SAVE STORE CONFIG
+  ========================================================== */
 
   useEffect(() => {
     try {
@@ -97,16 +121,17 @@ export default function App() {
         STORAGE_KEY,
         JSON.stringify(storeConfig)
       );
-    } catch (e) {
+    } catch (error) {
       console.error(
-        'Error saving store config to localStorage',
-        e
+        'Error saving store config',
+        error
       );
     }
   }, [storeConfig]);
-  // ============================================================
-  // SAVE MATERIAL CONFIGURATION
-  // ============================================================
+
+  /* ==========================================================
+     SAVE MATERIAL CONFIG
+  ========================================================== */
 
   useEffect(() => {
     try {
@@ -114,20 +139,45 @@ export default function App() {
         MATERIAL_CONFIG_STORAGE_KEY,
         JSON.stringify(materialConfigState)
       );
-    } catch (e) {
+    } catch (error) {
       console.error(
         'Error saving material configuration',
-        e
+        error
       );
     }
   }, [materialConfigState]);
-  // ============================================================
-  // CURRENCY
-  // ============================================================
+
+  /* ==========================================================
+     ACTIVE MATERIAL CONFIGURATION
+  ========================================================== */
+
+  const activeMaterialConfig:
+    | MaterialConfig
+    | undefined =
+    materialConfigState[selectedMaterial];
+
+  /*
+   * Fallback de seguridad.
+   *
+   * Si por alguna razón el material seleccionado
+   * no existe en la configuración almacenada,
+   * utilizamos Canvas.
+   */
+
+  const safeMaterialConfig: MaterialConfig =
+    activeMaterialConfig ||
+    materialConfigState[DEFAULT_MATERIAL] ||
+    materialConfigs[DEFAULT_MATERIAL];
+
+  /* ==========================================================
+     CURRENCY
+  ========================================================== */
 
   const selectedCurrency: CurrencyConfig =
     storeConfig.currencies.find(
-      (c) => c.code === storeConfig.selectedCurrencyCode
+      (currency) =>
+        currency.code ===
+        storeConfig.selectedCurrencyCode
     ) ||
     storeConfig.currencies[0] || {
       code: 'EUR',
@@ -137,52 +187,103 @@ export default function App() {
       position: 'suffix',
     };
 
-  const handleCurrencyChange = (code: string) => {
-    setStoreConfig((prev) => ({
-      ...prev,
+  const handleCurrencyChange = (
+    code: string
+  ) => {
+    setStoreConfig((previous) => ({
+      ...previous,
       selectedCurrencyCode: code,
     }));
   };
-  // ============================================================
-  // MATERIAL SELECTION
-  // ============================================================
 
-  const handleSelectMaterial = (material: MaterialId) => {
+  /* ==========================================================
+     MATERIAL SELECTION
+  ========================================================== */
+
+  const handleSelectMaterial = (
+    material: MaterialId
+  ) => {
+
+    /*
+     * Verificamos que el material exista.
+     */
+
+    if (!materialConfigState[material]) {
+      console.warn(
+        `Material "${material}" no está configurado.`
+      );
+
+      return;
+    }
+
     setSelectedMaterial(material);
   };
-    // ============================================================
-  // ACTIVE MATERIAL CONFIG
-  // ============================================================
 
-  const activeMaterialConfig =
-    materialConfigState[selectedMaterial];
-  // ============================================================
-  // INITIAL CANVAS
-  // ============================================================
+  /* ==========================================================
+     ACTIVE MATERIAL SIZES
+     
+     IMPORTANTE:
+     Los tamaños ahora vienen del material seleccionado.
+  ========================================================== */
+
+  const activeMaterialSizes =
+    safeMaterialConfig.sizes &&
+    safeMaterialConfig.sizes.length > 0
+      ? safeMaterialConfig.sizes
+      : storeConfig.sizes;
+
+  /* ==========================================================
+     INITIAL SIZE
+  ========================================================== */
 
   const initialSize =
-    storeConfig.sizes.find(
-      (s) => s.id === '75x100'
-    ) || storeConfig.sizes[0];
+    activeMaterialSizes.find(
+      (size) =>
+        size.id === '75x100'
+    ) ||
+    activeMaterialSizes[0] ||
+    storeConfig.sizes[0];
 
-  const defaultArtwork = PRESET_ARTWORKS[0];
+  /* ==========================================================
+     DEFAULT ARTWORK
+  ========================================================== */
+
+  const defaultArtwork =
+    PRESET_ARTWORKS[0];
+
+  /* ==========================================================
+     CUSTOMIZATION
+  ========================================================== */
 
   const [customization, setCustomization] =
     useState<CanvasCustomization>({
-      selectedImage: defaultArtwork.url,
-      imageName: defaultArtwork.title,
+      selectedImage:
+        defaultArtwork.url,
+
+      imageName:
+        defaultArtwork.title,
+
       imageDimensions: {
         width: 3600,
         height: 4800,
       },
 
-      size: initialSize,
+      size:
+        initialSize,
 
       depthCm: 2,
-      wrapStyle: 'gallery',
-      customWrapColor: '#ffffff',
-      frameStyle: 'none',
-      filter: 'none',
+
+      wrapStyle:
+        'gallery',
+
+      customWrapColor:
+        '#ffffff',
+
+      frameStyle:
+        'none',
+
+      filter:
+        'none',
 
       adjustments: {
         brightness: 0,
@@ -205,38 +306,106 @@ export default function App() {
       textLayers: [],
     });
 
-  // ============================================================
-  // KEEP SELECTED SIZE IN SYNC
-  // ============================================================
+  /* ==========================================================
+     KEEP SELECTED SIZE IN SYNC WITH ACTIVE MATERIAL
+  ========================================================== */
 
   useEffect(() => {
-    const existing = storeConfig.sizes.find(
-      (s) => s.id === customization.size.id
-    );
 
-    if (existing) {
-      setCustomization((prev) => ({
-        ...prev,
-        size: existing,
-      }));
-    } else if (storeConfig.sizes.length > 0) {
-      setCustomization((prev) => ({
-        ...prev,
-        size: storeConfig.sizes[0],
-      }));
+    const materialSizes =
+      safeMaterialConfig.sizes &&
+      safeMaterialConfig.sizes.length > 0
+        ? safeMaterialConfig.sizes
+        : storeConfig.sizes;
+
+    /*
+     * Intentamos mantener el tamaño actual
+     * si existe en el nuevo material.
+     */
+
+    const currentSize =
+      materialSizes.find(
+        (size) =>
+          size.id ===
+          customization.size.id
+      );
+
+    if (currentSize) {
+
+      setCustomization(
+        (previous) => ({
+          ...previous,
+          size: currentSize,
+        })
+      );
+
+      return;
     }
-  }, [storeConfig.sizes]);
 
-  // ============================================================
-  // VIEW
-  // ============================================================
+    /*
+     * Si el tamaño no existe para el nuevo material,
+     * intentamos utilizar 75x100.
+     */
+
+    const preferredSize =
+      materialSizes.find(
+        (size) =>
+          size.id === '75x100'
+      );
+
+    /*
+     * Finalmente usamos el primer tamaño disponible.
+     */
+
+    const nextSize =
+      preferredSize ||
+      materialSizes[0];
+
+    if (nextSize) {
+
+      setCustomization(
+        (previous) => ({
+          ...previous,
+          size: nextSize,
+        })
+      );
+    }
+
+  }, [
+    selectedMaterial,
+    safeMaterialConfig,
+    storeConfig.sizes,
+  ]);
+
+  /* ==========================================================
+     RESET / VALIDATE MATERIAL-SPECIFIC OPTIONS
+  ========================================================== */
+
+  useEffect(() => {
+
+    /*
+     * Cuando cambiamos de material,
+     * algunas opciones pueden no ser compatibles.
+     *
+     * Por ahora mantenemos la configuración actual
+     * para no romper el comportamiento existente.
+     *
+     * La validación específica de acabados y marcos
+     * se realizará posteriormente en SizeSelector.
+     */
+
+  }, [selectedMaterial]);
+
+  /* ==========================================================
+     VIEW MODE
+  ========================================================== */
 
   const [viewMode, setViewMode] =
     useState<'3d' | 'room'>('3d');
 
-  // ============================================================
-  // CART
-  // ============================================================
+  /* ==========================================================
+     INTERNAL CART
+  ========================================================== */
 
   const [cartItems, setCartItems] =
     useState<CartItem[]>([]);
@@ -244,9 +413,9 @@ export default function App() {
   const [toastMessage, setToastMessage] =
     useState<string | null>(null);
 
-  // ============================================================
-  // MODALS
-  // ============================================================
+  /* ==========================================================
+     MODALS
+  ========================================================== */
 
   const [isEditorOpen, setIsEditorOpen] =
     useState(false);
@@ -263,27 +432,41 @@ export default function App() {
   const [isShopifyOpen, setIsShopifyOpen] =
     useState(false);
 
-  // ============================================================
-  // CUSTOMIZATION UPDATE
-  // ============================================================
+  /* ==========================================================
+     CUSTOMIZATION UPDATE
+  ========================================================== */
 
   const handleUpdateCustomization = (
     partial: Partial<CanvasCustomization>
   ) => {
-    setCustomization((prev) => ({
-      ...prev,
-      ...partial,
-    }));
+
+    setCustomization(
+      (previous) => ({
+        ...previous,
+        ...partial,
+      })
+    );
   };
+
+  /* ==========================================================
+     SIZE SELECTION
+  ========================================================== */
 
   const handleSelectSize = (
     newSize: CanvasSize
   ) => {
-    setCustomization((prev) => ({
-      ...prev,
-      size: newSize,
-    }));
+
+    setCustomization(
+      (previous) => ({
+        ...previous,
+        size: newSize,
+      })
+    );
   };
+
+  /* ==========================================================
+     IMAGE SELECTION
+  ========================================================== */
 
   const handleSelectImage = (
     url: string,
@@ -293,60 +476,161 @@ export default function App() {
       height: number;
     }
   ) => {
-    setCustomization((prev) => ({
-      ...prev,
-      selectedImage: url,
-      imageName: name,
-      imageDimensions:
-        dimensions || {
-          width: 3000,
-          height: 3000,
-        },
-    }));
+
+    setCustomization(
+      (previous) => ({
+        ...previous,
+
+        selectedImage:
+          url,
+
+        imageName:
+          name,
+
+        imageDimensions:
+          dimensions || {
+            width: 3000,
+            height: 3000,
+          },
+      })
+    );
   };
 
-  // ============================================================
-  // PRINTED DESIRES → SHOPIFY BRIDGE
-  //
-  // Shopify receives the configuration and performs
-  // the real /cart/add.js operation.
-  // ============================================================
+  /* ==========================================================
+     CALCULATE FINAL PRICE
+     
+     Este cálculo continúa utilizando el precio
+     del tamaño activo y las opciones actuales.
+     
+     Más adelante lo conectaremos completamente
+     al motor de pricing de cada material.
+  ========================================================== */
 
-  const handleAddToBasket = () => {
+  const calculateCurrentPrice = () => {
+
     let price =
       customization.size.discountedPrice;
 
+    /*
+     * Depth
+     */
+
     const selectedDepth =
       storeConfig.depthOptions.find(
-        (d) =>
-          d.depthCm === customization.depthCm
+        (depth) =>
+          depth.depthCm ===
+          customization.depthCm
       );
 
-    if (selectedDepth) {
-      price += selectedDepth.extraPrice;
+    if (
+      selectedDepth &&
+      safeMaterialConfig.previewType === 'canvas'
+    ) {
+      price +=
+        selectedDepth.extraPrice;
     }
+
+    /*
+     * Frame
+     */
 
     const selectedFrame =
       storeConfig.frames.find(
-        (f) =>
-          f.id === customization.frameStyle
+        (frame) =>
+          frame.id ===
+          customization.frameStyle
       );
 
     if (selectedFrame) {
-      price += selectedFrame.price;
+
+      /*
+       * Para materiales que actualmente
+       * permiten marco.
+       */
+
+      if (
+        safeMaterialConfig.id === 'canvas' ||
+        safeMaterialConfig.id === 'framed' ||
+        safeMaterialConfig.id === 'poster'
+      ) {
+        price +=
+          selectedFrame.price;
+      }
     }
 
+    return (
+      Math.round(price * 100) /
+      100
+    );
+  };
+
+  /* ==========================================================
+     ADD TO SHOPIFY BASKET
+  ========================================================== */
+
+  const handleAddToBasket = () => {
+
+    const selectedDepth =
+      storeConfig.depthOptions.find(
+        (depth) =>
+          depth.depthCm ===
+          customization.depthCm
+      );
+
+    const selectedFrame =
+      storeConfig.frames.find(
+        (frame) =>
+          frame.id ===
+          customization.frameStyle
+      );
+
     const finalPrice =
-      Math.round(price * 100) / 100;
+      calculateCurrentPrice();
+
+    /* --------------------------------------------------------
+       ORDER ITEM
+    -------------------------------------------------------- */
 
     const orderItem = {
+
       quantity: 1,
+
+      /*
+       * MATERIAL
+       */
+
+      materialId:
+        safeMaterialConfig.id,
+
+      materialName:
+        safeMaterialConfig.displayName,
+
+      materialDescription:
+        safeMaterialConfig.description,
+
+      shopifyProductHandle:
+        safeMaterialConfig.shopifyProductHandle ||
+        '',
+
+      /*
+       * SIZE
+       */
 
       sizeId:
         customization.size.id,
 
       sizeLabel:
         customization.size.label,
+
+      widthCm:
+        customization.size.widthCm,
+
+      heightCm:
+        customization.size.heightCm,
+
+      /*
+       * OPTIONS
+       */
 
       depthCm:
         customization.depthCm,
@@ -361,7 +645,16 @@ export default function App() {
       wrapStyle:
         customization.wrapStyle,
 
-      price: finalPrice,
+      /*
+       * PRICE
+       */
+
+      price:
+        finalPrice,
+
+      /*
+       * IMAGE
+       */
 
       imageUrl:
         customization.selectedImage,
@@ -370,7 +663,12 @@ export default function App() {
         customization.imageName,
 
       imageDimensions:
-        customization.imageDimensions || null,
+        customization.imageDimensions ||
+        null,
+
+      /*
+       * IMAGE EDITING
+       */
 
       filter:
         customization.filter,
@@ -385,25 +683,28 @@ export default function App() {
         customization.textLayers,
     };
 
-    // ------------------------------------------------------------
-    // Send configuration to Shopify opener
-    // ------------------------------------------------------------
+    /* ========================================================
+       SHOPIFY WINDOW BRIDGE
+    ======================================================== */
 
     if (
       window.opener &&
       !window.opener.closed
     ) {
+
       window.opener.postMessage(
         {
           type:
             'PRINTED_DESIRES_ORDER_READY',
-          item: orderItem,
+
+          item:
+            orderItem,
         },
         '*'
       );
 
       setToastMessage(
-        'Configuración enviada a tu carrito de Shopify.'
+        `${safeMaterialConfig.displayName} enviado a tu carrito de Shopify.`
       );
 
       setTimeout(() => {
@@ -413,9 +714,9 @@ export default function App() {
       return;
     }
 
-    // ------------------------------------------------------------
-    // If opened directly instead of from Shopify
-    // ------------------------------------------------------------
+    /* ========================================================
+       DIRECT ACCESS
+    ======================================================== */
 
     setToastMessage(
       'Abre el personalizador desde tu tienda Printed Desires para continuar con el carrito.'
@@ -426,85 +727,152 @@ export default function App() {
     }, 4000);
   };
 
-  // ============================================================
-  // INTERNAL CART
-  // ============================================================
+  /* ==========================================================
+     INTERNAL CART QUANTITY
+  ========================================================== */
 
   const handleUpdateQuantity = (
     id: string,
     delta: number
   ) => {
-    setCartItems((prev) =>
-      prev
-        .map((item) => {
-          if (item.id === id) {
-            const newQty =
-              item.quantity + delta;
 
-            return newQty > 0
-              ? {
-                  ...item,
-                  quantity: newQty,
-                }
-              : null;
-          }
+    setCartItems(
+      (previous) =>
+        previous
+          .map((item) => {
 
-          return item;
-        })
-        .filter(Boolean) as CartItem[]
+            if (
+              item.id === id
+            ) {
+
+              const newQuantity =
+                item.quantity +
+                delta;
+
+              return newQuantity > 0
+                ? {
+                    ...item,
+                    quantity:
+                      newQuantity,
+                  }
+                : null;
+            }
+
+            return item;
+          })
+          .filter(Boolean) as CartItem[]
     );
   };
+
+  /* ==========================================================
+     REMOVE CART ITEM
+  ========================================================== */
 
   const handleRemoveItem = (
     id: string
   ) => {
-    setCartItems((prev) =>
-      prev.filter(
-        (item) => item.id !== id
-      )
+
+    setCartItems(
+      (previous) =>
+        previous.filter(
+          (item) =>
+            item.id !== id
+        )
     );
   };
 
+  /* ==========================================================
+     CART TOTAL
+  ========================================================== */
+
   const cartTotal =
     cartItems.reduce(
-      (acc, item) =>
-        acc +
+      (
+        accumulator,
+        item
+      ) =>
+        accumulator +
         item.unitPrice *
           item.quantity,
       0
     );
 
+  /* ==========================================================
+     CART COUNT
+  ========================================================== */
+
   const cartCount =
     cartItems.reduce(
-      (acc, item) =>
-        acc + item.quantity,
+      (
+        accumulator,
+        item
+      ) =>
+        accumulator +
+        item.quantity,
       0
     );
 
-  // ============================================================
-  // RENDER
-  // ============================================================
+  /* ==========================================================
+     RENDER
+  ========================================================== */
 
   return (
-    <div className="min-h-screen flex flex-col bg-[#F8F5F0] text-[#171513]">
+    <div
+      className="
+        min-h-screen
+        flex
+        flex-col
+        bg-[#F8F5F0]
+        text-[#171513]
+      "
+    >
 
       {/* ======================================================
           TOAST
       ====================================================== */}
 
       {toastMessage && (
+
         <div
-          className="fixed top-24 right-5 z-50 bg-[#171513] text-[#FFFFFF] text-xs sm:text-sm font-medium px-4 py-3 rounded-xl border border-[#B99A62] shadow-luxury-lg flex items-center gap-2.5 animate-bounce"
+          className="
+            fixed
+            top-24
+            right-5
+            z-50
+            bg-[#171513]
+            text-[#FFFFFF]
+            text-xs
+            sm:text-sm
+            font-medium
+            px-4
+            py-3
+            rounded-xl
+            border
+            border-[#B99A62]
+            shadow-luxury-lg
+            flex
+            items-center
+            gap-2.5
+            animate-bounce
+          "
           style={{
             boxShadow:
               '0 10px 30px -5px rgba(18, 18, 18, 0.3)',
           }}
         >
-          <Check className="w-4 h-4 text-[#B99A62]" />
+
+          <Check
+            className="
+              w-4
+              h-4
+              text-[#B99A62]
+            "
+          />
 
           <span>
             {toastMessage}
           </span>
+
         </div>
       )}
 
@@ -512,195 +880,448 @@ export default function App() {
           HEADER
       ====================================================== */}
 
-    <Header
-  cartCount={cartCount}
-  cartTotal={cartTotal}
-  config={storeConfig}
-  selectedCurrency={selectedCurrency}
-  onCurrencyChange={handleCurrencyChange}
-  onOpenCart={() => setIsCartOpen(true)}
-  onOpenShopify={() => setIsShopifyOpen(true)}
-  onOpenHelp={() => setIsQualityModalOpen(true)}
-  onSelectMaterial={handleSelectMaterial}
-/>
+      <Header
+        cartCount={
+          cartCount
+        }
+
+        cartTotal={
+          cartTotal
+        }
+
+        config={
+          storeConfig
+        }
+
+        selectedCurrency={
+          selectedCurrency
+        }
+
+        onCurrencyChange={
+          handleCurrencyChange
+        }
+
+        onOpenCart={() =>
+          setIsCartOpen(true)
+        }
+
+        onOpenShopify={() =>
+          setIsShopifyOpen(true)
+        }
+
+        onOpenHelp={() =>
+          setIsQualityModalOpen(true)
+        }
+
+        onSelectMaterial={
+          handleSelectMaterial
+        }
+      />
 
       {/* ======================================================
           MAIN CUSTOMIZER
       ====================================================== */}
 
-      <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-10">
-        
-      {/* ======================================================
-    ACTIVE MATERIAL
-====================================================== */}
+      <main
+        className="
+          flex-1
+          max-w-7xl
+          w-full
+          mx-auto
+          px-4
+          sm:px-6
+          lg:px-8
+          py-6
+          sm:py-10
+        "
+      >
 
-<div className="mb-4 rounded-xl border border-[#E7E1D8] bg-white px-4 py-3 shadow-luxury-sm">
+        {/* ====================================================
+            ACTIVE MATERIAL INFORMATION
+        ==================================================== */}
 
-  <div className="flex items-center justify-between gap-4">
+        <div
+          className="
+            mb-4
+            rounded-xl
+            border
+            border-[#E7E1D8]
+            bg-white
+            px-4
+            py-3
+            shadow-luxury-sm
+          "
+        >
 
-    <div>
-      <p className="text-[10px] uppercase tracking-[0.18em] text-[#B99A62] font-bold">
-        Printed Desires Wall Art
-      </p>
+          <div
+            className="
+              flex
+              items-center
+              justify-between
+              gap-4
+            "
+          >
 
-      <h2 className="mt-1 text-base sm:text-lg font-semibold text-[#171513]">
-        {activeMaterialConfig.displayName}
-      </h2>
+            <div>
 
-      <p className="mt-1 text-xs text-[#4A352B]/70">
-        {activeMaterialConfig.description}
-      </p>
-    </div>
+              <p
+                className="
+                  text-[10px]
+                  uppercase
+                  tracking-[0.18em]
+                  text-[#B99A62]
+                  font-bold
+                "
+              >
+                Printed Desires Wall Art
+              </p>
 
-    <div className="shrink-0 text-xs font-semibold text-[#4A352B]">
-      {selectedMaterial}
-    </div>
+              <h2
+                className="
+                  mt-1
+                  text-base
+                  sm:text-lg
+                  font-semibold
+                  text-[#171513]
+                "
+              >
+                {
+                  safeMaterialConfig.displayName
+                }
+              </h2>
 
-  </div>
+              <p
+                className="
+                  mt-1
+                  text-xs
+                  text-[#4A352B]/70
+                "
+              >
+                {
+                  safeMaterialConfig.description
+                }
+              </p>
 
-</div>
-       
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8 items-start">
+            </div>
+
+            <div
+              className="
+                shrink-0
+                text-xs
+                font-semibold
+                text-[#4A352B]
+              "
+            >
+              {
+                safeMaterialConfig.id
+              }
+            </div>
+
+          </div>
+
+        </div>
+
+        {/* ====================================================
+            MAIN GRID
+        ==================================================== */}
+
+        <div
+          className="
+            grid
+            grid-cols-1
+            lg:grid-cols-12
+            gap-6
+            lg:gap-8
+            items-start
+          "
+        >
 
           {/* ==================================================
               LEFT — PREVIEW
           ================================================== */}
 
-          <div className="lg:col-span-7 h-full flex flex-col">
+          <div
+            className="
+              lg:col-span-7
+              h-full
+              flex
+              flex-col
+            "
+          >
 
             {viewMode === '3d' ? (
+
               <Canvas3DViewer
+
                 customization={
                   customization
                 }
+
                 viewMode={
                   viewMode
                 }
+
                 onViewModeChange={
                   setViewMode
                 }
+
                 onOpenEditor={() =>
                   setIsEditorOpen(
                     true
                   )
                 }
+
                 primaryColor={
                   storeConfig.primaryColor
                 }
+
                 brandName={
                   storeConfig.brandName
                 }
+
               />
+
             ) : (
+
               <RoomVisualizer
+
                 customization={
                   customization
                 }
+
                 onSelectSize={
                   handleSelectSize
                 }
+
                 onViewModeChange={
                   setViewMode
                 }
+
                 viewMode={
                   viewMode
                 }
+
                 primaryColor={
                   storeConfig.primaryColor
                 }
+
                 availableSizes={
-                  storeConfig.sizes
+                  activeMaterialSizes
                 }
+
               />
+
             )}
 
             {/* ==================================================
                 QUALITY FEATURES
             ================================================== */}
 
-            <div className="mt-4 grid grid-cols-2 sm:grid-cols-4 gap-2.5 text-center text-xs text-[#4A352B]">
+            <div
+              className="
+                mt-4
+                grid
+                grid-cols-2
+                sm:grid-cols-4
+                gap-2.5
+                text-center
+                text-xs
+                text-[#4A352B]
+              "
+            >
 
-              <div className="p-2.5 bg-[#FFFFFF] rounded-xl border border-[#E7E1D8] shadow-luxury-sm flex items-center justify-center gap-1.5 font-medium">
-                <Layers className="w-3.5 h-3.5 text-[#B99A62]" />
+              <div
+                className="
+                  p-2.5
+                  bg-[#FFFFFF]
+                  rounded-xl
+                  border
+                  border-[#E7E1D8]
+                  shadow-luxury-sm
+                  flex
+                  items-center
+                  justify-center
+                  gap-1.5
+                  font-medium
+                "
+              >
+
+                <Layers
+                  className="
+                    w-3.5
+                    h-3.5
+                    text-[#B99A62]
+                  "
+                />
+
                 <span>
                   Algodón 380g/m²
                 </span>
+
               </div>
 
-              <div className="p-2.5 bg-[#FFFFFF] rounded-xl border border-[#E7E1D8] shadow-luxury-sm flex items-center justify-center gap-1.5 font-medium">
-                <Palette className="w-3.5 h-3.5 text-[#B99A62]" />
+              <div
+                className="
+                  p-2.5
+                  bg-[#FFFFFF]
+                  rounded-xl
+                  border
+                  border-[#E7E1D8]
+                  shadow-luxury-sm
+                  flex
+                  items-center
+                  justify-center
+                  gap-1.5
+                  font-medium
+                "
+              >
+
+                <Palette
+                  className="
+                    w-3.5
+                    h-3.5
+                    text-[#B99A62]
+                  "
+                />
+
                 <span>
                   Tintas Epson HD
                 </span>
+
               </div>
 
-              <div className="p-2.5 bg-[#FFFFFF] rounded-xl border border-[#E7E1D8] shadow-luxury-sm flex items-center justify-center gap-1.5 font-medium">
-                <Shield className="w-3.5 h-3.5 text-[#B99A62]" />
+              <div
+                className="
+                  p-2.5
+                  bg-[#FFFFFF]
+                  rounded-xl
+                  border
+                  border-[#E7E1D8]
+                  shadow-luxury-sm
+                  flex
+                  items-center
+                  justify-center
+                  gap-1.5
+                  font-medium
+                "
+              >
+
+                <Shield
+                  className="
+                    w-3.5
+                    h-3.5
+                    text-[#B99A62]
+                  "
+                />
+
                 <span>
                   100+ Años UV
                 </span>
+
               </div>
 
-              <div className="p-2.5 bg-[#FFFFFF] rounded-xl border border-[#E7E1D8] shadow-luxury-sm flex items-center justify-center gap-1.5 font-medium">
-                <Award className="w-3.5 h-3.5 text-[#B99A62]" />
+              <div
+                className="
+                  p-2.5
+                  bg-[#FFFFFF]
+                  rounded-xl
+                  border
+                  border-[#E7E1D8]
+                  shadow-luxury-sm
+                  flex
+                  items-center
+                  justify-center
+                  gap-1.5
+                  font-medium
+                "
+              >
+
+                <Award
+                  className="
+                    w-3.5
+                    h-3.5
+                    text-[#B99A62]
+                  "
+                />
+
                 <span>
                   Tensado a Mano
                 </span>
+
               </div>
 
             </div>
+
           </div>
 
           {/* ==================================================
               RIGHT — SIZE / PURCHASE
           ================================================== */}
 
-          <div className="lg:col-span-5 h-full">
+          <div
+            className="
+              lg:col-span-5
+              h-full
+            "
+          >
 
             <SizeSelector
+
               customization={
                 customization
               }
+
               config={
                 storeConfig
               }
+
               selectedCurrency={
                 selectedCurrency
               }
+
               onSelectSize={
                 handleSelectSize
               }
+
               onUpdateCustomization={
                 handleUpdateCustomization
               }
+
               onOpenEditor={() =>
                 setIsEditorOpen(
                   true
                 )
               }
+
               onOpenImageModal={() =>
                 setIsImageModalOpen(
                   true
                 )
               }
+
               onAddToBasket={
                 handleAddToBasket
               }
+
               onOpenShopify={() =>
                 setIsShopifyOpen(
                   true
                 )
               }
+
               onQuickUpdateConfig={
                 (updater) =>
                   setStoreConfig(
                     updater
                   )
               }
+
             />
 
           </div>
+
         </div>
+
       </main>
 
       {/* ======================================================
@@ -708,15 +1329,19 @@ export default function App() {
       ====================================================== */}
 
       <ShopifyCodeModal
+
         isOpen={
           isShopifyOpen
         }
+
         onClose={() =>
           setIsShopifyOpen(false)
         }
+
         brandName={
           storeConfig.brandName
         }
+
       />
 
       {/* ======================================================
@@ -724,18 +1349,23 @@ export default function App() {
       ====================================================== */}
 
       <EditorModal
+
         isOpen={
           isEditorOpen
         }
+
         onClose={() =>
           setIsEditorOpen(false)
         }
+
         customization={
           customization
         }
+
         onSave={
           handleUpdateCustomization
         }
+
       />
 
       {/* ======================================================
@@ -743,18 +1373,23 @@ export default function App() {
       ====================================================== */}
 
       <ImageModal
+
         isOpen={
           isImageModalOpen
         }
+
         onClose={() =>
           setIsImageModalOpen(false)
         }
+
         onSelectImage={
           handleSelectImage
         }
+
         currentImage={
           customization.selectedImage
         }
+
       />
 
       {/* ======================================================
@@ -762,27 +1397,35 @@ export default function App() {
       ====================================================== */}
 
       <CartDrawer
+
         isOpen={
           isCartOpen
         }
+
         onClose={() =>
           setIsCartOpen(false)
         }
+
         items={
           cartItems
         }
+
         onUpdateQuantity={
           handleUpdateQuantity
         }
+
         onRemoveItem={
           handleRemoveItem
         }
+
         currency={
           selectedCurrency
         }
+
         primaryColor={
           storeConfig.primaryColor
         }
+
       />
 
       {/* ======================================================
@@ -790,12 +1433,15 @@ export default function App() {
       ====================================================== */}
 
       <QualityInfoModal
+
         isOpen={
           isQualityModalOpen
         }
+
         onClose={() =>
           setIsQualityModalOpen(false)
         }
+
       />
 
     </div>
