@@ -868,35 +868,32 @@ export const RoomVisualizer: React.FC<RoomVisualizerProps> = ({
               BOTTOM DIMENSION
           ================================================== */}
 
-          {showRuler && (
-            <div
-              className="
-                flex
-                items-center
-                justify-center
-                mt-1
-                text-[11px]
-                font-semibold
-                text-[#171513]
-                bg-[#F8F5F0]/95
-                px-2.5
-                py-0.5
-                rounded-lg
-                shadow-luxury-sm
-                border
-                border-[#D9CEBF]
-                font-mono
-                tracking-tight
-              "
-            >
-              <span>
-                ↕ Alto: {heightCm} cm
-              </span>
-            </div>
-          )}
-        </div>
-      </div>
-
+         {/* Top Ruler Line */}
+{showRuler && (
+  <div
+    className="
+      w-full
+      flex
+      items-center
+      justify-center
+      mb-1
+      text-[11px]
+      font-semibold
+      text-[#171513]
+      bg-[#F8F5F0]/95
+      px-2.5
+      py-0.5
+      rounded-lg
+      shadow-luxury-sm
+      border
+      border-[#D9CEBF]
+      font-mono
+      tracking-tight
+    "
+  >
+    <span>↔ Ancho: {widthCm} cm</span>
+  </div>
+)}
       {/* ======================================================
           BOTTOM COMPARISON BAR
       ====================================================== */}
