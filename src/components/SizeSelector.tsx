@@ -1,4 +1,5 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
+
 import {
   CanvasCustomization,
   CanvasSize,
@@ -12,49 +13,29 @@ import {
   getMaterialConfig,
 } from '../materialConfig';
 
-import { formatCurrency } from '../utils/canvasHelpers';
-
 import {
+  Check,
+  ChevronDown,
   Edit3,
   Image as ImageIcon,
-  Check,
-  Truck,
-  Sparkles,
-  ChevronDown,
-  Layers,
-  Sliders,
-  Plus,
-  Code2,
-  Ruler,
+  Info,
   Palette,
-  Box,
-  Frame,
+  Plus,
+  Ruler,
+  Sliders,
+  Sparkles,
+  Truck,
 } from 'lucide-react';
-
 
 /* ============================================================
    PROPS
    ============================================================ */
 
 interface SizeSelectorProps {
-  /**
-   * Material actualmente seleccionado.
-   *
-   * Ej:
-   * canvas
-   * framed
-   * metal
-   * acrylic
-   * poster
-   */
   materialId: MaterialId;
 
   customization: CanvasCustomization;
 
-  /**
-   * StoreConfig se mantiene para compatibilidad
-   * con la arquitectura actual.
-   */
   config: StoreConfig;
 
   selectedCurrency: CurrencyConfig;
@@ -75,15 +56,10 @@ interface SizeSelectorProps {
 
   onOpenShopify?: () => void;
 
-  /**
-   * Se conserva para compatibilidad con el
-   * StoreConfig editor actual.
-   */
   onQuickUpdateConfig?: (
     updater: (prev: StoreConfig) => StoreConfig
   ) => void;
 }
-
 
 /* ============================================================
    CATEGORY LABELS
@@ -98,6 +74,40 @@ const CATEGORY_LABELS: Record<string, string> = {
   custom: 'Custom',
 };
 
+/* ============================================================
+   HELPERS
+   ============================================================ */
+
+function getCategoryLabel(category: string): string {
+  if (CATEGORY_LABELS[category]) {
+    return CATEGORY_LABELS[category];
+  }
+
+  return category
+    .replace(/[-_]/g, ' ')
+    .replace(/\b\w/g, (letter) => letter.toUpperCase());
+}
+
+function formatPrice(
+  amount: number,
+  currency: CurrencyConfig
+): string {
+  const converted =
+    amount * (currency?.rate || 1);
+
+  const symbol =
+    currency?.symbol ||
+    currency?.code ||
+    '€';
+
+  const value = converted.toFixed(2);
+
+  if (currency?.position === 'suffix') {
+    return `${value} ${symbol}`;
+  }
+
+  return `${symbol}${value}`;
+}
 
 /* ============================================================
    COMPONENT
@@ -120,225 +130,217 @@ export const SizeSelector: React.FC<SizeSelectorProps> = ({
   onOpenShopify,
   onQuickUpdateConfig,
 }) => {
-
   /* ==========================================================
      MATERIAL CONFIG
      ========================================================== */
 
-  const materialConfig = getMaterialConfig(materialId);
-
+  const materialConfig =
+    getMaterialConfig(materialId);
 
   /* ==========================================================
      UI STATE
      ========================================================== */
 
-  const [showFramingOptions, setShowFramingOptions] =
+  const [activeCategory, setActiveCategory] =
+    useState<string>('');
+
+  const [showOptions, setShowOptions] =
     useState<boolean>(false);
-
-  const [showMaterialOptions, setShowMaterialOptions] =
-    useState<boolean>(false);
-
-
-  /* ==========================================================
-     CUSTOM SIZE STATE
-     ========================================================== */
 
   const [customW, setCustomW] =
-    useState<number>(customization.size.widthCm);
+    useState<number>(
+      customization.size.widthCm
+    );
 
   const [customH, setCustomH] =
-    useState<number>(customization.size.heightCm);
-
+    useState<number>(
+      customization.size.heightCm
+    );
 
   /* ==========================================================
-     AVAILABLE CATEGORIES
+     MATERIAL AVAILABILITY
+     ========================================================== */
+
+  const materialAvailable =
+    materialConfig.admin?.availableForSale !== false;
+
+  /* ==========================================================
+     MATERIAL SIZES
+     ========================================================== */
+
+  const materialSizes = useMemo(
+    () => materialConfig.sizes || [],
+    [materialConfig.sizes]
+  );
+
+  /* ==========================================================
+     CATEGORIES
      ========================================================== */
 
   const categories = useMemo(() => {
-
-    const uniqueCategories = Array.from(
+    return Array.from(
       new Set(
-        materialConfig.sizes
+        materialSizes
           .map((size) => size.category)
           .filter(Boolean)
       )
     );
-
-    return uniqueCategories;
-
-  }, [materialConfig.sizes]);
-
+  }, [materialSizes]);
 
   /* ==========================================================
-     ACTIVE CATEGORY
+     INITIAL / SYNCHRONIZED CATEGORY
      ========================================================== */
 
-  const defaultCategory =
-    customization.size.category ||
-    categories[0] ||
-    'popular';
+  useEffect(() => {
+    const currentCategory =
+      customization.size.category;
 
-  const [activeCategory, setActiveCategory] =
-    useState<string>(defaultCategory);
+    if (
+      currentCategory &&
+      categories.includes(currentCategory)
+    ) {
+      setActiveCategory(currentCategory);
+      return;
+    }
 
+    if (
+      activeCategory &&
+      categories.includes(activeCategory)
+    ) {
+      return;
+    }
+
+    setActiveCategory(
+      categories[0] || 'popular'
+    );
+  }, [
+    customization.size.category,
+    categories,
+    activeCategory,
+  ]);
 
   /* ==========================================================
      FILTERED SIZES
      ========================================================== */
 
   const filteredSizes = useMemo(() => {
-
-    return materialConfig.sizes.filter(
-      (size) => size.category === activeCategory
+    return materialSizes.filter(
+      (size) =>
+        size.category === activeCategory
     );
-
   }, [
-    materialConfig.sizes,
+    materialSizes,
     activeCategory,
   ]);
-
 
   /* ==========================================================
      MATERIAL OPTIONS
      ========================================================== */
 
   const frameColors =
-    materialConfig.options?.frameColors ?? [];
+    materialConfig.options?.frameColors || [];
 
   const finishes =
-    materialConfig.options?.finishes ?? [];
+    materialConfig.options?.finishes || [];
 
   const thicknesses =
-    materialConfig.options?.thicknesses ?? [];
+    materialConfig.options?.thicknesses || [];
 
   const mounting =
-    materialConfig.options?.mounting ?? [];
+    materialConfig.options?.mounting || [];
 
-
-  const hasFrames =
-    frameColors.length > 0;
-
-  const hasFinishes =
-    finishes.length > 0;
-
-  const hasThicknesses =
-    thicknesses.length > 0;
-
-  const hasMounting =
+  const hasOptions =
+    frameColors.length > 0 ||
+    finishes.length > 0 ||
+    thicknesses.length > 0 ||
     mounting.length > 0;
 
-
   /* ==========================================================
-     CUSTOM SIZE CONFIGURATION
+     CUSTOM SIZE
      ========================================================== */
 
   const allowCustomSize =
     materialConfig.pricing?.allowCustomSize ?? false;
 
   const customSizeMinimumPrice =
-    materialConfig.pricing?.customSizeMinimumPrice ?? 0;
-
+    materialConfig.pricing
+      ?.customSizeMinimumPrice ?? 0;
 
   /* ==========================================================
-     FRAME COMPATIBILITY
+     SELECTED FRAME
      ========================================================== */
 
   const selectedFrame =
-    config.frames.find(
+    config.frames?.find(
       (frame) =>
-        frame.id === customization.frameStyle
+        frame.id ===
+        customization.frameStyle
     );
 
-  const frameCost =
-    selectedFrame?.price ?? 0;
-
+  const frameExtraPrice =
+    materialId === 'canvas'
+      ? selectedFrame?.price || 0
+      : 0;
 
   /* ==========================================================
-     DEPTH COMPATIBILITY
+     SELECTED DEPTH
      ========================================================== */
 
   const selectedDepth =
-    config.depthOptions.find(
+    config.depthOptions?.find(
       (depth) =>
-        depth.depthCm === customization.depthCm
+        depth.depthCm ===
+        customization.depthCm
     );
 
-  const depthCost =
-    selectedDepth?.extraPrice ?? 0;
-
-
-  /* ==========================================================
-     BASE PRICE
-     ========================================================== */
-
-  const baseOriginal =
-    customization.size.originalPrice;
-
-  const baseDiscounted =
-    customization.size.discountedPrice;
-
-
-  /* ==========================================================
-     TOTAL PRICE
-     ========================================================== */
-
-  /**
-   * IMPORTANTE:
-   *
-   * El precio base procede directamente del tamaño
-   * perteneciente al material seleccionado.
-   *
-   * No utilizamos materialConfig.pricing.basePrice
-   * como sustituto del precio por tamaño.
-   *
-   * Esto mantiene compatibilidad con CanvasSize.
-   */
-
-  const optionsExtraPrice =
+  const depthExtraPrice =
     materialId === 'canvas'
-      ? frameCost + depthCost
+      ? selectedDepth?.extraPrice || 0
       : 0;
 
-  const totalDiscounted =
-    baseDiscounted +
-    optionsExtraPrice;
+  /* ==========================================================
+     PRICE
+     ========================================================== */
 
+  const basePrice =
+    customization.size.discountedPrice;
 
-  /**
-   * Precio original visual.
-   *
-   * Mantenemos la lógica actual para no cambiar
-   * el aspecto comercial del configurador.
-   */
+  const originalPrice =
+    customization.size.originalPrice;
 
-  const totalOriginal =
-    baseOriginal +
-    optionsExtraPrice * 1.5;
+  const totalPrice =
+    basePrice +
+    frameExtraPrice +
+    depthExtraPrice;
 
+  const totalOriginalPrice =
+    originalPrice +
+    frameExtraPrice +
+    depthExtraPrice;
 
-  const effectiveDiscount =
-    totalOriginal > 0
+  const discountPercent =
+    totalOriginalPrice > 0
       ? Math.max(
           0,
           Math.round(
             (
-              (totalOriginal - totalDiscounted) /
-              totalOriginal
+              (totalOriginalPrice -
+                totalPrice) /
+              totalOriginalPrice
             ) * 100
           )
         )
       : 0;
 
-
   /* ==========================================================
-     MATERIAL UI TEXT
+     MATERIAL TEXT
      ========================================================== */
 
-  const materialTitle =
+  const title =
     materialConfig.ui.title ||
     materialConfig.displayName;
 
-  const materialSubtitle =
+  const subtitle =
     materialConfig.ui.subtitle ||
     materialConfig.description;
 
@@ -354,81 +356,160 @@ export const SizeSelector: React.FC<SizeSelectorProps> = ({
     materialConfig.ui.addToCartText ||
     'Add to cart';
 
+  /* ==========================================================
+     SELECT SIZE
+     ========================================================== */
+
+  const handleSelectSize = (
+    size: CanvasSize
+  ) => {
+    onSelectSize(size);
+  };
+
+  /* ==========================================================
+     FRAME
+     ========================================================== */
+
+  const handleFrameChange = (
+    value: string
+  ) => {
+    let frameId: FrameStyle =
+      'none';
+
+    const normalized =
+      value.toLowerCase();
+
+    if (
+      normalized.includes('natural') ||
+      normalized.includes('oak') ||
+      normalized.includes('wood')
+    ) {
+      frameId = 'floating_oak';
+    }
+
+    if (
+      normalized.includes('black') ||
+      normalized.includes('negro')
+    ) {
+      frameId = 'floating_black';
+    }
+
+    if (
+      normalized.includes('white') ||
+      normalized.includes('blanco')
+    ) {
+      frameId = 'floating_white';
+    }
+
+    if (
+      normalized.includes('gold') ||
+      normalized.includes('oro')
+    ) {
+      frameId = 'gold_vintage';
+    }
+
+    onUpdateCustomization({
+      frameStyle: frameId,
+    });
+  };
+
+  /* ==========================================================
+     DEPTH
+     ========================================================== */
+
+  const handleDepthChange = (
+    value: string
+  ) => {
+    const depth =
+      parseInt(value, 10);
+
+    if (
+      depth === 2 ||
+      depth === 4
+    ) {
+      onUpdateCustomization({
+        depthCm: depth,
+      });
+    }
+  };
 
   /* ==========================================================
      CUSTOM SIZE
      ========================================================== */
 
   const handleApplyCustomSize = () => {
-
     if (!allowCustomSize) {
       return;
     }
 
+    const width =
+      Number(customW);
+
+    const height =
+      Number(customH);
+
     if (
-      customW < 15 ||
-      customH < 15 ||
-      customW > 200 ||
-      customH > 200
+      !Number.isFinite(width) ||
+      !Number.isFinite(height)
     ) {
       return;
     }
 
+    if (
+      width < 15 ||
+      height < 15 ||
+      width > 250 ||
+      height > 250
+    ) {
+      return;
+    }
 
-    const area =
-      (customW * customH) / 10000;
-
-
-    /**
-     * Si existe un precio mínimo específico
-     * para el material, lo respetamos.
+    /*
+     * Precio calculado por superficie.
      *
-     * El cálculo continúa siendo compatible
-     * con el modelo actual.
+     * Se utiliza únicamente para tamaños
+     * personalizados.
      */
+    const areaM2 =
+      (width * height) / 10000;
 
     const calculatedPrice =
       Math.max(
         customSizeMinimumPrice,
         Math.round(
-          area * 75 * 100
+          areaM2 * 75 * 100
         ) / 100
       );
-
 
     const calculatedOriginal =
       Math.round(
         calculatedPrice * 1.8 * 100
       ) / 100;
 
-
     const discount =
       calculatedOriginal > 0
-        ? Math.round(
-            (
+        ? Math.max(
+            0,
+            Math.round(
               (
-                calculatedOriginal -
-                calculatedPrice
-              ) /
-              calculatedOriginal
-            ) * 100
+                (calculatedOriginal -
+                  calculatedPrice) /
+                calculatedOriginal
+              ) * 100
+            )
           )
         : 0;
 
-
     const customSize: CanvasSize = {
-
       id:
-        `${materialId}-custom-${customW}x${customH}`,
+        `${materialId}-custom-${width}x${height}`,
 
       label:
-        `${customW} x ${customH}cm`,
+        `${width} x ${height}cm`,
 
-      widthCm:
-        customW,
+      widthCm: width,
 
-      heightCm:
-        customH,
+      heightCm: height,
 
       originalPrice:
         calculatedOriginal,
@@ -446,79 +527,59 @@ export const SizeSelector: React.FC<SizeSelectorProps> = ({
         false,
     };
 
-
     onSelectSize(customSize);
 
     setActiveCategory('custom');
   };
 
-
   /* ==========================================================
      QUICK ADD SIZE
      ========================================================== */
 
-  const handleQuickAddSizeToMaterial = () => {
-
+  const handleQuickAddSize = () => {
     const label =
       window.prompt(
-        'Dimensiones del nuevo formato (ej. 45 x 60cm):',
+        'Dimensiones del nuevo formato:',
         '45 x 60cm'
       );
-
 
     if (!label) {
       return;
     }
 
-
-    const originalPriceInput =
+    const originalInput =
       window.prompt(
         'Precio original:',
         '59.95'
       );
 
-
-    const discountedPriceInput =
+    const discountedInput =
       window.prompt(
         'Precio final:',
         '29.99'
       );
 
+    const parts =
+      label
+        .replace(/[^0-9xX.,]/g, '')
+        .replace(/,/g, '.')
+        .split(/[xX]/);
+
+    const width =
+      parseFloat(parts[0]) || 45;
+
+    const height =
+      parseFloat(parts[1]) || 60;
 
     const originalPrice =
       parseFloat(
-        originalPriceInput || '59.95'
+        originalInput || ''
       ) || 59.95;
-
 
     const discountedPrice =
       parseFloat(
-        discountedPriceInput || '29.99'
+        discountedInput || ''
       ) || 29.99;
-
-
-    const parts =
-      label
-        .replace(
-          /[^0-9xX]/g,
-          ''
-        )
-        .split(/[xX]/);
-
-
-    const width =
-      parseInt(
-        parts[0],
-        10
-      ) || 45;
-
-
-    const height =
-      parseInt(
-        parts[1],
-        10
-      ) || 60;
-
 
     const discount =
       originalPrice > 0
@@ -526,29 +587,23 @@ export const SizeSelector: React.FC<SizeSelectorProps> = ({
             0,
             Math.round(
               (
-                (
-                  originalPrice -
-                  discountedPrice
-                ) /
+                (originalPrice -
+                  discountedPrice) /
                 originalPrice
               ) * 100
             )
           )
         : 0;
 
-
     const newSize: CanvasSize = {
-
       id:
         `${materialId}-size-${Date.now()}`,
 
       label,
 
-      widthCm:
-        width,
+      widthCm: width,
 
-      heightCm:
-        height,
+      heightCm: height,
 
       originalPrice,
 
@@ -558,124 +613,87 @@ export const SizeSelector: React.FC<SizeSelectorProps> = ({
         discount,
 
       category:
-        activeCategory,
+        activeCategory || 'popular',
 
       isBestSeller:
         false,
     };
 
-
-    /**
-     * Compatibilidad:
+    /*
+     * Mantiene compatibilidad con
+     * StoreConfig.sizes.
      *
-     * Actualmente StoreConfig.sizes continúa
-     * existiendo.
-     *
-     * El materialConfig real deberá gestionarse
-     * posteriormente desde el administrador de
-     * materiales.
+     * La configuración principal por
+     * material continúa estando en
+     * materialConfig.
      */
-
     if (onQuickUpdateConfig) {
-
       onQuickUpdateConfig(
-        (prev) => ({
-
-          ...prev,
+        (previous) => ({
+          ...previous,
 
           sizes: [
             newSize,
-            ...prev.sizes,
+            ...previous.sizes,
           ],
-
         })
       );
-
     }
-
 
     onSelectSize(newSize);
   };
 
-
   /* ==========================================================
-     FRAME SELECTION
+     CURRENT FRAME LABEL
      ========================================================== */
 
-  const handleFrameSelection = (
-    frameId: string
-  ) => {
-
-    onUpdateCustomization({
-      frameStyle:
-        frameId as FrameStyle,
-    });
-
-  };
-
+  const currentFrameLabel =
+    selectedFrame?.name ||
+    customization.frameStyle ||
+    'Sin marco';
 
   /* ==========================================================
-     CATEGORY LABEL
+     CURRENT DEPTH LABEL
      ========================================================== */
 
-  const getCategoryLabel =
-    (category: string) =>
-      CATEGORY_LABELS[category] ||
-      category
-        .replace(/[-_]/g, ' ')
-        .replace(
-          /\b\w/g,
-          (letter) =>
-            letter.toUpperCase()
-        );
-
-
-  /* ==========================================================
-     MATERIAL CHANGE SAFETY
-     ========================================================== */
-
-  const materialAvailable =
-    materialConfig.admin?.availableForSale !== false;
-
+  const currentDepthLabel =
+    `${customization.depthCm} cm`;
 
   /* ==========================================================
      RENDER
      ========================================================== */
 
   return (
-
     <div
       className="
-        bg-[#FFFFFF]
+        w-full
+        h-full
+        bg-white
         rounded-2xl
         border
         border-[#E7E1D8]
-        shadow-luxury-md
+        shadow-lg
+        overflow-hidden
         flex
         flex-col
-        h-full
-        overflow-hidden
       "
-      style={{
-        boxShadow:
-          '0 12px 36px -4px rgba(18,18,18,0.10)',
-      }}
     >
 
       {/* ======================================================
-          MATERIAL HEADER
+          HEADER
       ====================================================== */}
 
       <div
         className="
-          p-4
-          sm:p-5
+          px-4
+          py-4
+          sm:px-5
+          sm:py-5
+          bg-[#F8F5F0]
           border-b
           border-[#E7E1D8]
-          bg-[#F8F5F0]
         "
       >
-
         <div
           className="
             flex
@@ -687,50 +705,44 @@ export const SizeSelector: React.FC<SizeSelectorProps> = ({
 
           <div className="min-w-0">
 
-            <span
+            <div
               className="
                 text-[10px]
-                text-[#4A352B]/65
                 uppercase
                 tracking-[0.18em]
                 font-semibold
-                block
+                text-[#4A352B]/60
                 mb-1
               "
             >
-              {materialTitle}
-            </span>
+              {title}
+            </div>
 
-
-            <span
+            <div
               className="
-                text-2xl
-                font-normal
+                text-xl
+                sm:text-2xl
                 text-[#171513]
-                tracking-tight
                 font-serif-display
-                block
+                tracking-tight
               "
             >
               {customization.size.label}
-            </span>
+            </div>
 
-
-            {materialSubtitle && (
-              <p
-                className="
-                  mt-1
-                  text-[11px]
-                  text-[#4A352B]/65
-                  line-clamp-2
-                "
-              >
-                {materialSubtitle}
-              </p>
-            )}
+            <p
+              className="
+                mt-1
+                text-[11px]
+                leading-relaxed
+                text-[#4A352B]/65
+                line-clamp-2
+              "
+            >
+              {subtitle}
+            </p>
 
           </div>
-
 
           <div
             className="
@@ -741,8 +753,6 @@ export const SizeSelector: React.FC<SizeSelectorProps> = ({
             "
           >
 
-            {/* EDIT */}
-
             <button
               type="button"
               onClick={onOpenEditor}
@@ -751,20 +761,17 @@ export const SizeSelector: React.FC<SizeSelectorProps> = ({
                 items-center
                 gap-1.5
                 px-3
-                py-1.5
-                text-xs
-                font-medium
-                text-[#171513]
-                bg-[#FFFFFF]
-                hover:bg-[#F2ECE1]
+                py-2
                 rounded-lg
                 border
                 border-[#D9CEBF]
-                shadow-luxury-sm
-                transition-all
-                active:scale-95
+                bg-white
+                text-xs
+                font-medium
+                text-[#171513]
+                hover:bg-[#F2ECE1]
+                transition
               "
-              title="Editar fotografía"
             >
               <Edit3
                 className="
@@ -774,38 +781,32 @@ export const SizeSelector: React.FC<SizeSelectorProps> = ({
                 "
               />
 
-              <span>
+              <span className="hidden sm:inline">
                 Editar
               </span>
             </button>
 
-
-            {/* PHOTO */}
-
             <button
               type="button"
               onClick={onOpenImageModal}
+              title={uploadText}
               className="
                 flex
                 items-center
                 gap-1.5
                 px-3
-                py-1.5
-                text-xs
-                font-medium
-                text-[#171513]
-                bg-[#FFFFFF]
-                hover:bg-[#F2ECE1]
+                py-2
                 rounded-lg
                 border
                 border-[#D9CEBF]
-                shadow-luxury-sm
-                transition-all
-                active:scale-95
+                bg-white
+                text-xs
+                font-medium
+                text-[#171513]
+                hover:bg-[#F2ECE1]
+                transition
               "
-              title={uploadText}
             >
-
               <ImageIcon
                 className="
                   w-3.5
@@ -815,36 +816,28 @@ export const SizeSelector: React.FC<SizeSelectorProps> = ({
               />
 
               <span className="hidden sm:inline">
-                Cambiar Foto
+                Cambiar foto
               </span>
 
               <span className="sm:hidden">
                 Foto
               </span>
-
             </button>
-
-
-            {/* STORE */}
 
             <button
               type="button"
               onClick={onOpenStoreEditor}
+              title="Configuración"
               className="
                 p-2
-                text-[#4A352B]
-                hover:text-[#171513]
-                bg-[#FFFFFF]
-                hover:bg-[#F2ECE1]
                 rounded-lg
                 border
                 border-[#D9CEBF]
-                shadow-luxury-sm
-                transition-colors
+                bg-white
+                hover:bg-[#F2ECE1]
+                transition
               "
-              title="Configuración de tienda"
             >
-
               <Sliders
                 className="
                   w-3.5
@@ -852,27 +845,24 @@ export const SizeSelector: React.FC<SizeSelectorProps> = ({
                   text-[#B99A62]
                 "
               />
-
             </button>
 
           </div>
 
         </div>
-
       </div>
 
-
       {/* ======================================================
-          MATERIAL INFORMATION BAR
+          MATERIAL BAR
       ====================================================== */}
 
       <div
         className="
           px-4
           py-2.5
+          bg-white
           border-b
           border-[#E7E1D8]
-          bg-[#FFFFFF]
           flex
           items-center
           justify-between
@@ -888,11 +878,10 @@ export const SizeSelector: React.FC<SizeSelectorProps> = ({
             min-w-0
           "
         >
-
-          <Box
+          <Palette
             className="
-              w-3.5
-              h-3.5
+              w-4
+              h-4
               text-[#B99A62]
               shrink-0
             "
@@ -900,29 +889,28 @@ export const SizeSelector: React.FC<SizeSelectorProps> = ({
 
           <span
             className="
-              text-[11px]
+              text-xs
+              font-medium
               text-[#4A352B]
               truncate
             "
           >
             {materialConfig.displayName}
           </span>
-
         </div>
-
 
         {!materialAvailable && (
           <span
             className="
-              text-[9px]
-              uppercase
-              tracking-wider
-              font-bold
-              text-[#FFFFFF]
-              bg-[#B98989]
               px-2
               py-1
               rounded-full
+              bg-[#B98989]
+              text-white
+              text-[9px]
+              font-bold
+              uppercase
+              tracking-wider
             "
           >
             No disponible
@@ -931,135 +919,158 @@ export const SizeSelector: React.FC<SizeSelectorProps> = ({
 
       </div>
 
-
       {/* ======================================================
           CATEGORY TABS
       ====================================================== */}
 
       <div
         className="
-          border-b
-          border-[#E7E1D8]
           px-4
           pt-3
+          border-b
+          border-[#E7E1D8]
           flex
           items-center
-          gap-4
+          gap-5
           overflow-x-auto
-          no-scrollbar
-          bg-[#FFFFFF]
+          bg-white
         "
       >
 
         {categories.map(
           (category) => {
 
-            const isActive =
+            const active =
               activeCategory === category;
 
-
             return (
-
               <button
-                type="button"
                 key={category}
+                type="button"
                 onClick={() =>
                   setActiveCategory(category)
                 }
                 className={`
-                  pb-2.5
-                  text-xs
-                  tracking-wide
-                  transition-colors
                   relative
+                  pb-3
                   whitespace-nowrap
+                  text-xs
                   font-medium
-
+                  transition-colors
                   ${
-                    isActive
+                    active
                       ? 'text-[#171513] font-semibold'
-                      : 'text-[#4A352B]/70 hover:text-[#171513]'
+                      : 'text-[#4A352B]/60 hover:text-[#171513]'
                   }
                 `}
               >
-
                 {getCategoryLabel(category)}
 
-
-                {isActive && (
+                {active && (
                   <span
                     className="
                       absolute
-                      bottom-0
                       left-0
                       right-0
+                      bottom-0
                       h-0.5
-                      rounded-full
                       bg-[#B99A62]
+                      rounded-full
                     "
                   />
                 )}
-
               </button>
-
             );
-
           }
         )}
 
-
-        {/* QUICK ADD */}
-
         <button
           type="button"
-          onClick={handleQuickAddSizeToMaterial}
+          onClick={handleQuickAddSize}
           className="
-            pb-2.5
-            text-xs
-            text-[#B99A62]
-            hover:text-[#171513]
+            pb-3
             flex
             items-center
             gap-1
-            transition-colors
             whitespace-nowrap
+            text-xs
             font-medium
+            text-[#B99A62]
+            hover:text-[#171513]
           "
-          title="Añadir formato"
         >
-
-          <Plus
-            className="
-              w-3.5
-              h-3.5
-            "
-          />
-
-          <span>
-            Añadir
-          </span>
-
+          <Plus className="w-3.5 h-3.5" />
+          Añadir
         </button>
 
       </div>
 
-
       {/* ======================================================
-          SIZE LIST
+          SIZE CONTENT
       ====================================================== */}
 
       <div
         className="
-          p-3
-          sm:p-4
-          overflow-y-auto
-          max-h-[300px]
-          divide-y
-          divide-[#F0EBE1]
           flex-1
-          bg-[#FFFFFF]
+          overflow-y-auto
+          p-4
+          bg-white
         "
       >
+
+        {/* ====================================================
+            SIZE TITLE
+        ==================================================== */}
+
+        <div
+          className="
+            flex
+            items-center
+            justify-between
+            mb-3
+          "
+        >
+
+          <div
+            className="
+              flex
+              items-center
+              gap-2
+            "
+          >
+            <Ruler
+              className="
+                w-4
+                h-4
+                text-[#B99A62]
+              "
+            />
+
+            <span
+              className="
+                text-sm
+                font-semibold
+                text-[#171513]
+              "
+            >
+              {sizeText}
+            </span>
+          </div>
+
+          <span
+            className="
+              text-[10px]
+              text-[#4A352B]/55
+            "
+          >
+            {materialSizes.length} formatos
+          </span>
+
+        </div>
+
+        {/* ====================================================
+            SIZE LIST
+        ==================================================== */}
 
         {filteredSizes.length === 0 ? (
 
@@ -1067,41 +1078,45 @@ export const SizeSelector: React.FC<SizeSelectorProps> = ({
             className="
               py-8
               text-center
-              text-xs
-              text-[#4A352B]/70
-              space-y-3
+              border
+              border-dashed
+              border-[#D9CEBF]
+              rounded-xl
+              bg-[#FAF8F5]
             "
           >
 
             <Ruler
               className="
-                w-6
-                h-6
+                w-7
+                h-7
                 mx-auto
+                mb-2
                 text-[#B99A62]
               "
             />
 
-            <p>
-              No hay tamaños configurados
-              en esta sección.
+            <p
+              className="
+                text-xs
+                text-[#4A352B]/65
+                mb-3
+              "
+            >
+              No hay tamaños configurados.
             </p>
 
             <button
               type="button"
-              onClick={
-                handleQuickAddSizeToMaterial
-              }
+              onClick={handleQuickAddSize}
               className="
-                px-3
-                py-1.5
+                px-4
+                py-2
+                rounded-lg
+                bg-[#171513]
+                text-white
                 text-xs
                 font-semibold
-                text-[#FFFFFF]
-                bg-[#171513]
-                hover:bg-[#4A352B]
-                rounded-lg
-                transition-colors
               "
             >
               + Añadir tamaño
@@ -1111,259 +1126,261 @@ export const SizeSelector: React.FC<SizeSelectorProps> = ({
 
         ) : (
 
-          filteredSizes.map(
-            (size) => {
+          <div
+            className="
+              grid
+              grid-cols-1
+              sm:grid-cols-2
+              gap-2
+            "
+          >
 
-              const isSelected =
-                customization.size.id === size.id;
+            {filteredSizes.map(
+              (size) => {
 
+                const selected =
+                  customization.size.id ===
+                  size.id;
 
-              return (
-
-                <button
-                  type="button"
-                  key={size.id}
-                  onClick={() =>
-                    onSelectSize(size)
-                  }
-                  className={`
-                    w-full
-                    flex
-                    items-center
-                    justify-between
-                    gap-3
-                    p-3
-                    rounded-xl
-                    cursor-pointer
-                    transition-all
-                    text-left
-
-                    ${
-                      isSelected
-                        ? 'bg-[#F8F5F0] border border-[#B99A62] shadow-luxury-sm'
-                        : 'hover:bg-[#FAF8F5] border border-transparent'
+                return (
+                  <button
+                    key={size.id}
+                    type="button"
+                    onClick={() =>
+                      handleSelectSize(size)
                     }
-                  `}
-                >
-
-                  {/* LEFT */}
-
-                  <div
-                    className="
-                      flex
-                      items-center
-                      gap-3
-                      min-w-0
-                    "
+                    className={`
+                      relative
+                      w-full
+                      text-left
+                      p-3
+                      rounded-xl
+                      border
+                      transition-all
+                      ${
+                        selected
+                          ? 'border-[#B99A62] bg-[#F8F5F0] shadow-sm'
+                          : 'border-[#E7E1D8] bg-white hover:border-[#B99A62]/50 hover:bg-[#FAF8F5]'
+                      }
+                    `}
                   >
 
                     <div
                       className="
-                        w-4
-                        h-4
-                        rounded-full
-                        border
                         flex
                         items-center
-                        justify-center
-                        transition-all
-                        shrink-0
-                      "
-                      style={{
-                        borderColor:
-                          isSelected
-                            ? '#B99A62'
-                            : '#D9CEBF',
-
-                        backgroundColor:
-                          isSelected
-                            ? '#B99A62'
-                            : '#FFFFFF',
-                      }}
-                    >
-
-                      {isSelected && (
-                        <Check
-                          className="
-                            w-2.5
-                            h-2.5
-                            text-[#FFFFFF]
-                          "
-                        />
-                      )}
-
-                    </div>
-
-
-                    <div
-                      className="
-                        flex
-                        items-center
-                        gap-2
-                        min-w-0
+                        justify-between
+                        gap-3
                       "
                     >
 
-                      <span
-                        className={`
-                          text-sm
-                          truncate
+                      <div className="min-w-0">
 
-                          ${
-                            isSelected
-                              ? 'font-semibold text-[#171513]'
-                              : 'font-normal text-[#4A352B]'
-                          }
-                        `}
-                      >
-                        {size.label}
-                      </span>
-
-
-                      {size.isBestSeller && (
-                        <span
+                        <div
                           className="
-                            text-[9px]
-                            font-bold
-                            text-[#FFFFFF]
-                            bg-[#B99A62]
-                            px-2
-                            py-0.5
-                            rounded-full
-                            tracking-wider
-                            uppercase
-                            shadow-2xs
-                            whitespace-nowrap
+                            flex
+                            items-center
+                            gap-2
                           "
                         >
-                          Best Seller
-                        </span>
-                      )}
+
+                          <span
+                            className="
+                              text-sm
+                              font-semibold
+                              text-[#171513]
+                            "
+                          >
+                            {size.label}
+                          </span>
+
+                          {size.isBestSeller && (
+                            <span
+                              className="
+                                px-1.5
+                                py-0.5
+                                rounded
+                                bg-[#171513]
+                                text-[#B99A62]
+                                text-[8px]
+                                uppercase
+                                tracking-wider
+                                font-bold
+                              "
+                            >
+                              Best
+                            </span>
+                          )}
+
+                        </div>
+
+                        <div
+                          className="
+                            mt-1
+                            text-[10px]
+                            text-[#4A352B]/55
+                          "
+                        >
+                          {size.widthCm} × {size.heightCm} cm
+                        </div>
+
+                      </div>
+
+                      <div
+                        className="
+                          text-right
+                          shrink-0
+                        "
+                      >
+
+                        <div
+                          className="
+                            text-sm
+                            font-bold
+                            text-[#171513]
+                          "
+                        >
+                          {formatPrice(
+                            size.discountedPrice,
+                            selectedCurrency
+                          )}
+                        </div>
+
+                        {size.originalPrice >
+                          size.discountedPrice && (
+                          <div
+                            className="
+                              text-[10px]
+                              text-[#4A352B]/40
+                              line-through
+                            "
+                          >
+                            {formatPrice(
+                              size.originalPrice,
+                              selectedCurrency
+                            )}
+                          </div>
+                        )}
+
+                      </div>
 
                     </div>
 
-                  </div>
-
-
-                  {/* PRICE */}
-
-                  <div
-                    className="
-                      flex
-                      items-center
-                      gap-2
-                      font-mono
-                      tabular-nums
-                      shrink-0
-                    "
-                  >
-
-                    {size.originalPrice >
-                      size.discountedPrice && (
-                      <span
+                    {selected && (
+                      <div
                         className="
-                          text-xs
-                          text-[#4A352B]/40
-                          line-through
+                          absolute
+                          top-2
+                          right-2
+                          w-5
+                          h-5
+                          rounded-full
+                          bg-[#171513]
+                          flex
+                          items-center
+                          justify-center
                         "
                       >
-                        {formatCurrency(
-                          size.originalPrice,
-                          selectedCurrency
-                        )}
-                      </span>
+                        <Check
+                          className="
+                            w-3
+                            h-3
+                            text-[#B99A62]
+                          "
+                        />
+                      </div>
                     )}
 
+                  </button>
+                );
+              }
+            )}
 
-                    <span
-                      className="
-                        text-sm
-                        font-bold
-                        text-[#171513]
-                      "
-                    >
-                      {formatCurrency(
-                        size.discountedPrice,
-                        selectedCurrency
-                      )}
-                    </span>
-
-                  </div>
-
-                </button>
-
-              );
-
-            }
-          )
-
+          </div>
         )}
-
 
         {/* ====================================================
             CUSTOM SIZE
         ==================================================== */}
 
         {allowCustomSize && (
-
           <div
             className="
-              pt-3
-              space-y-2
+              mt-4
+              p-4
+              rounded-xl
+              border
+              border-[#E7E1D8]
+              bg-[#FAF8F5]
             "
           >
 
             <div
               className="
-                bg-[#F8F5F0]
-                p-3
-                rounded-xl
-                border
-                border-[#E7E1D8]
+                flex
+                items-center
+                gap-2
+                mb-3
+              "
+            >
+              <Ruler
+                className="
+                  w-4
+                  h-4
+                  text-[#B99A62]
+                "
+              />
+
+              <div>
+                <div
+                  className="
+                    text-xs
+                    font-semibold
+                    text-[#171513]
+                  "
+                >
+                  Tamaño personalizado
+                </div>
+
+                <div
+                  className="
+                    text-[10px]
+                    text-[#4A352B]/55
+                  "
+                >
+                  Desde {formatPrice(
+                    customSizeMinimumPrice,
+                    selectedCurrency
+                  )}
+                </div>
+              </div>
+            </div>
+
+            <div
+              className="
+                grid
+                grid-cols-2
+                gap-2
               "
             >
 
-              <div
-                className="
-                  font-medium
-                  text-[#4A352B]
-                  mb-2
-                  flex
-                  items-center
-                  justify-between
-                  gap-2
-                "
-              >
-
-                <span>
-                  Medida personalizada
-                </span>
-
-                <span
+              <div>
+                <label
                   className="
+                    block
+                    mb-1
                     text-[10px]
-                    text-[#4A352B]/60
-                    font-mono
+                    font-medium
+                    text-[#4A352B]/65
                   "
                 >
-                  15–200 cm
-                </span>
-
-              </div>
-
-
-              <div
-                className="
-                  flex
-                  items-center
-                  gap-2
-                "
-              >
+                  Ancho (cm)
+                </label>
 
                 <input
                   type="number"
-                  min="15"
-                  max="200"
+                  min={15}
+                  max={250}
                   value={customW}
                   onChange={(event) =>
                     setCustomW(
@@ -1371,34 +1388,37 @@ export const SizeSelector: React.FC<SizeSelectorProps> = ({
                     )
                   }
                   className="
-                    w-16
-                    p-1.5
-                    bg-[#FFFFFF]
+                    w-full
+                    px-3
+                    py-2.5
+                    rounded-lg
                     border
                     border-[#D9CEBF]
-                    rounded
-                    text-center
-                    font-mono
-                    font-semibold
-                    text-[#171513]
+                    bg-white
+                    text-sm
+                    outline-none
+                    focus:border-[#B99A62]
                   "
-                  aria-label="Ancho"
                 />
+              </div>
 
-
-                <span
+              <div>
+                <label
                   className="
-                    text-[#4A352B]/40
+                    block
+                    mb-1
+                    text-[10px]
+                    font-medium
+                    text-[#4A352B]/65
                   "
                 >
-                  ×
-                </span>
-
+                  Alto (cm)
+                </label>
 
                 <input
                   type="number"
-                  min="15"
-                  max="200"
+                  min={15}
+                  max={250}
                   value={customH}
                   onChange={(event) =>
                     setCustomH(
@@ -1406,788 +1426,563 @@ export const SizeSelector: React.FC<SizeSelectorProps> = ({
                     )
                   }
                   className="
-                    w-16
-                    p-1.5
-                    bg-[#FFFFFF]
+                    w-full
+                    px-3
+                    py-2.5
+                    rounded-lg
                     border
                     border-[#D9CEBF]
-                    rounded
-                    text-center
-                    font-mono
-                    font-semibold
-                    text-[#171513]
+                    bg-white
+                    text-sm
+                    outline-none
+                    focus:border-[#B99A62]
                   "
-                  aria-label="Alto"
                 />
-
-
-                <span
-                  className="
-                    text-[#4A352B]/70
-                    font-mono
-                    text-[11px]
-                  "
-                >
-                  cm
-                </span>
-
-
-                <button
-                  type="button"
-                  onClick={
-                    handleApplyCustomSize
-                  }
-                  className="
-                    ml-auto
-                    bg-[#171513]
-                    hover:bg-[#4A352B]
-                    text-[#FFFFFF]
-                    px-3
-                    py-1.5
-                    rounded
-                    font-medium
-                    text-xs
-                    transition-colors
-                    shadow-luxury-sm
-                  "
-                >
-                  Fijar
-                </button>
-
               </div>
 
             </div>
 
-          </div>
+            <button
+              type="button"
+              onClick={handleApplyCustomSize}
+              className="
+                mt-3
+                w-full
+                py-2.5
+                rounded-lg
+                bg-[#171513]
+                text-white
+                text-xs
+                font-semibold
+                hover:bg-[#4A352B]
+                transition
+              "
+            >
+              Usar tamaño personalizado
+            </button>
 
+          </div>
         )}
 
-      </div>
+        {/* ====================================================
+            MATERIAL OPTIONS
+        ==================================================== */}
 
-
-      {/* ======================================================
-          MATERIAL OPTIONS
-      ====================================================== */}
-
-      {(hasFrames ||
-        hasFinishes ||
-        hasThicknesses ||
-        hasMounting) && (
-
-        <div
-          className="
-            border-t
-            border-[#E7E1D8]
-            px-4
-            py-3
-            bg-[#F8F5F0]
-            text-xs
-          "
-        >
-
-          <button
-            type="button"
-            onClick={() =>
-              setShowMaterialOptions(
-                !showMaterialOptions
-              )
-            }
+        {hasOptions && (
+          <div
             className="
-              w-full
-              flex
-              items-center
-              justify-between
-              text-[#4A352B]
-              font-medium
-              py-1
+              mt-4
+              rounded-xl
+              border
+              border-[#E7E1D8]
+              overflow-hidden
             "
           >
 
-            <div
+            <button
+              type="button"
+              onClick={() =>
+                setShowOptions(
+                  (value) => !value
+                )
+              }
               className="
-                flex
-                items-center
-                gap-1.5
-              "
-            >
-
-              <Palette
-                className="
-                  w-3.5
-                  h-3.5
-                  text-[#B99A62]
-                "
-              />
-
-              <span>
-                Opciones de {materialConfig.displayName}
-              </span>
-
-            </div>
-
-
-            <ChevronDown
-              className={`
-                w-4
-                h-4
-                text-[#4A352B]/60
-                transition-transform
-
-                ${
-                  showMaterialOptions
-                    ? 'rotate-180'
-                    : ''
-                }
-              `}
-            />
-
-          </button>
-
-
-          {showMaterialOptions && (
-
-            <div
-              className="
-                pt-2
-                space-y-3
-              "
-            >
-
-              {/* FINISHES */}
-
-              {hasFinishes && (
-
-                <div>
-
-                  <div
-                    className="
-                      text-[10px]
-                      uppercase
-                      tracking-wider
-                      font-semibold
-                      text-[#4A352B]/65
-                      mb-1.5
-                    "
-                  >
-                    {materialConfig.ui.finishText ||
-                      'Acabado'}
-                  </div>
-
-
-                  <div
-                    className="
-                      flex
-                      flex-wrap
-                      gap-1.5
-                    "
-                  >
-
-                    {finishes.map(
-                      (finish) => (
-
-                        <button
-                          type="button"
-                          key={finish}
-                          className="
-                            px-2.5
-                            py-1.5
-                            rounded-lg
-                            border
-                            border-[#D9CEBF]
-                            bg-[#FFFFFF]
-                            hover:border-[#B99A62]
-                            text-[10px]
-                            text-[#4A352B]
-                            transition-colors
-                          "
-                        >
-                          {finish}
-                        </button>
-
-                      )
-                    )}
-
-                  </div>
-
-                </div>
-
-              )}
-
-
-              {/* THICKNESSES */}
-
-              {hasThicknesses && (
-
-                <div>
-
-                  <div
-                    className="
-                      text-[10px]
-                      uppercase
-                      tracking-wider
-                      font-semibold
-                      text-[#4A352B]/65
-                      mb-1.5
-                    "
-                  >
-                    {materialConfig.ui.thicknessText ||
-                      'Grosor'}
-                  </div>
-
-
-                  <div
-                    className="
-                      flex
-                      flex-wrap
-                      gap-1.5
-                    "
-                  >
-
-                    {thicknesses.map(
-                      (thickness) => (
-
-                        <button
-                          type="button"
-                          key={thickness}
-                          className="
-                            px-2.5
-                            py-1.5
-                            rounded-lg
-                            border
-                            border-[#D9CEBF]
-                            bg-[#FFFFFF]
-                            hover:border-[#B99A62]
-                            text-[10px]
-                            text-[#4A352B]
-                            transition-colors
-                          "
-                        >
-                          {thickness}
-                        </button>
-
-                      )
-                    )}
-
-                  </div>
-
-                </div>
-
-              )}
-
-
-              {/* MOUNTING */}
-
-              {hasMounting && (
-
-                <div>
-
-                  <div
-                    className="
-                      text-[10px]
-                      uppercase
-                      tracking-wider
-                      font-semibold
-                      text-[#4A352B]/65
-                      mb-1.5
-                    "
-                  >
-                    Montaje
-                  </div>
-
-
-                  <div
-                    className="
-                      flex
-                      flex-wrap
-                      gap-1.5
-                    "
-                  >
-
-                    {mounting.map(
-                      (mount) => (
-
-                        <button
-                          type="button"
-                          key={mount}
-                          className="
-                            px-2.5
-                            py-1.5
-                            rounded-lg
-                            border
-                            border-[#D9CEBF]
-                            bg-[#FFFFFF]
-                            hover:border-[#B99A62]
-                            text-[10px]
-                            text-[#4A352B]
-                            transition-colors
-                          "
-                        >
-                          {mount}
-                        </button>
-
-                      )
-                    )}
-
-                  </div>
-
-                </div>
-
-              )}
-
-
-              {/* FRAME COLORS */}
-
-              {hasFrames && (
-
-                <div>
-
-                  <div
-                    className="
-                      text-[10px]
-                      uppercase
-                      tracking-wider
-                      font-semibold
-                      text-[#4A352B]/65
-                      mb-1.5
-                    "
-                  >
-                    {materialConfig.ui.frameText ||
-                      'Marco'}
-                  </div>
-
-
-                  <div
-                    className="
-                      grid
-                      grid-cols-2
-                      gap-1.5
-                    "
-                  >
-
-                    {frameColors.map(
-                      (frameColor) => {
-
-                        const matchingFrame =
-                          config.frames.find(
-                            (frame) =>
-                              frame.name
-                                .toLowerCase()
-                                .includes(
-                                  frameColor
-                                    .toLowerCase()
-                                )
-                          );
-
-
-                        const isSelected =
-                          matchingFrame
-                            ? customization.frameStyle ===
-                              matchingFrame.id
-                            : false;
-
-
-                        return (
-
-                          <button
-                            type="button"
-                            key={frameColor}
-                            onClick={() => {
-
-                              if (
-                                matchingFrame
-                              ) {
-                                handleFrameSelection(
-                                  matchingFrame.id
-                                );
-                              }
-
-                            }}
-                            className={`
-                              p-2.5
-                              rounded-xl
-                              border
-                              text-left
-                              flex
-                              items-center
-                              gap-2
-                              transition-all
-
-                              ${
-                                isSelected
-                                  ? 'border-[#B99A62] bg-[#FFFFFF] ring-1 ring-[#B99A62]'
-                                  : 'border-[#E7E1D8] bg-[#FFFFFF] hover:border-[#D9CEBF]'
-                              }
-                            `}
-                          >
-
-                            <Frame
-                              className="
-                                w-4
-                                h-4
-                                text-[#B99A62]
-                              "
-                            />
-
-                            <span
-                              className="
-                                text-[10px]
-                                text-[#171513]
-                                truncate
-                              "
-                            >
-                              {frameColor}
-                            </span>
-
-                          </button>
-
-                        );
-
-                      }
-                    )}
-
-                  </div>
-
-                </div>
-
-              )}
-
-            </div>
-
-          )}
-
-        </div>
-
-      )}
-
-
-      {/* ======================================================
-          CANVAS LEGACY OPTIONS
-      ====================================================== */}
-
-      {materialId === 'canvas' && (
-        <div
-          className="
-            border-t
-            border-[#E7E1D8]
-            px-4
-            py-3
-            bg-[#F8F5F0]
-            space-y-2
-            text-xs
-          "
-        >
-
-          {/* FRAME */}
-
-          {config.frames.length > 0 && (
-
-            <div>
-
-              <button
-                type="button"
-                onClick={() =>
-                  setShowFramingOptions(
-                    !showFramingOptions
-                  )
-                }
-                className="
-                  w-full
-                  flex
-                  items-center
-                  justify-between
-                  text-[#4A352B]
-                  font-medium
-                  py-1
-                "
-              >
-
-                <div
-                  className="
-                    flex
-                    items-center
-                    gap-1.5
-                  "
-                >
-
-                  <Layers
-                    className="
-                      w-3.5
-                      h-3.5
-                      text-[#B99A62]
-                    "
-                  />
-
-                  <span>
-                    Marco Flotante Artesanal
-                  </span>
-
-
-                  {customization.frameStyle !==
-                    'none' && (
-                    <span
-                      className="
-                        text-[10px]
-                        font-bold
-                        text-[#B99A62]
-                      "
-                    >
-                      (+
-                      {formatCurrency(
-                        frameCost,
-                        selectedCurrency
-                      )}
-                      )
-                    </span>
-                  )}
-
-                </div>
-
-
-                <ChevronDown
-                  className={`
-                    w-4
-                    h-4
-                    text-[#4A352B]/60
-                    transition-transform
-
-                    ${
-                      showFramingOptions
-                        ? 'rotate-180'
-                        : ''
-                    }
-                  `}
-                />
-
-              </button>
-
-
-              {showFramingOptions && (
-
-                <div
-                  className="
-                    grid
-                    grid-cols-2
-                    gap-1.5
-                    pt-2
-                  "
-                >
-
-                  {config.frames.map(
-                    (frame) => {
-
-                      const isSelected =
-                        customization.frameStyle ===
-                        frame.id;
-
-
-                      return (
-
-                        <button
-                          type="button"
-                          key={frame.id}
-                          onClick={() =>
-                            onUpdateCustomization({
-                              frameStyle:
-                                frame.id as FrameStyle,
-                            })
-                          }
-                          className={`
-                            p-2.5
-                            rounded-xl
-                            border
-                            text-left
-                            flex
-                            items-start
-                            gap-2
-                            transition-all
-
-                            ${
-                              isSelected
-                                ? 'border-[#B99A62] bg-[#FFFFFF] shadow-luxury-sm ring-1 ring-[#B99A62]'
-                                : 'border-[#E7E1D8] bg-[#FFFFFF] hover:border-[#D9CEBF]'
-                            }
-                          `}
-                        >
-
-                          <div
-                            className={`
-                              w-4
-                              h-4
-                              rounded-sm
-                              shrink-0
-                              mt-0.5
-                              border
-                              ${frame.colorClass}
-                            `}
-                            style={{
-                              backgroundColor:
-                                frame.hexColor,
-                            }}
-                          />
-
-
-                          <div
-                            className="
-                              overflow-hidden
-                            "
-                          >
-
-                            <p
-                              className="
-                                font-medium
-                                text-[#171513]
-                                truncate
-                                text-[11px]
-                              "
-                            >
-                              {frame.name}
-                            </p>
-
-
-                            <p
-                              className="
-                                text-[10px]
-                                text-[#4A352B]/70
-                                font-mono
-                              "
-                            >
-                              {frame.price > 0
-                                ? `+${formatCurrency(
-                                    frame.price,
-                                    selectedCurrency
-                                  )}`
-                                : 'Incluido'}
-                            </p>
-
-                          </div>
-
-                        </button>
-
-                      );
-
-                    }
-                  )}
-
-                </div>
-
-              )}
-
-            </div>
-
-          )}
-
-
-          {/* DEPTH */}
-
-          {config.depthOptions.length > 0 && (
-
-            <div
-              className="
+                w-full
+                px-4
+                py-3
                 flex
                 items-center
                 justify-between
-                gap-2
-                pt-1
+                bg-white
+                hover:bg-[#FAF8F5]
               "
             >
-
-              <span
-                className="
-                  font-medium
-                  text-[#4A352B]
-                "
-              >
-                Grosor bastidor:
-              </span>
-
 
               <div
                 className="
                   flex
                   items-center
-                  gap-1
-                  bg-[#FFFFFF]
-                  p-0.5
-                  rounded-lg
-                  border
-                  border-[#D9CEBF]
-                  text-[11px]
-                  font-medium
-                  shadow-luxury-sm
+                  gap-2
+                "
+              >
+                <Palette
+                  className="
+                    w-4
+                    h-4
+                    text-[#B99A62]
+                  "
+                />
+
+                <span
+                  className="
+                    text-xs
+                    font-semibold
+                    text-[#171513]
+                  "
+                >
+                  Opciones del producto
+                </span>
+              </div>
+
+              <ChevronDown
+                className={`
+                  w-4
+                  h-4
+                  text-[#4A352B]
+                  transition-transform
+                  ${
+                    showOptions
+                      ? 'rotate-180'
+                      : ''
+                  }
+                `}
+              />
+
+            </button>
+
+            {showOptions && (
+              <div
+                className="
+                  px-4
+                  pb-4
+                  space-y-4
+                  border-t
+                  border-[#E7E1D8]
+                  bg-[#FAF8F5]
                 "
               >
 
-                {config.depthOptions.map(
-                  (option) => (
+                {/* FRAME COLORS */}
 
-                    <button
-                      type="button"
-                      key={option.depthCm}
-                      onClick={() =>
-                        onUpdateCustomization({
-                          depthCm:
-                            option.depthCm,
-                        })
-                      }
-                      className={`
-                        px-2.5
-                        py-1
-                        rounded
-                        transition-all
+                {frameColors.length > 0 && (
+                  <div className="pt-4">
 
-                        ${
-                          customization.depthCm ===
-                          option.depthCm
-                            ? 'bg-[#171513] text-[#FFFFFF] font-semibold'
-                            : 'text-[#4A352B] hover:text-[#171513]'
-                        }
-                      `}
+                    <label
+                      className="
+                        block
+                        mb-2
+                        text-[10px]
+                        uppercase
+                        tracking-wider
+                        font-semibold
+                        text-[#4A352B]/60
+                      "
+                    >
+                      Marco
+                    </label>
+
+                    <div
+                      className="
+                        grid
+                        grid-cols-2
+                        gap-2
+                      "
                     >
 
-                      {option.label}
+                      {frameColors.map(
+                        (frame) => (
+                          <button
+                            key={frame}
+                            type="button"
+                            onClick={() =>
+                              handleFrameChange(
+                                frame
+                              )
+                            }
+                            className="
+                              px-3
+                              py-2
+                              rounded-lg
+                              border
+                              border-[#D9CEBF]
+                              bg-white
+                              text-xs
+                              text-[#171513]
+                              hover:border-[#B99A62]
+                              transition
+                              text-left
+                            "
+                          >
+                            {frame}
+                          </button>
+                        )
+                      )}
 
-                      {option.extraPrice > 0 &&
-                        ` (+${formatCurrency(
-                          option.extraPrice,
-                          selectedCurrency
-                        )})`}
+                    </div>
 
-                    </button>
+                    <div
+                      className="
+                        mt-2
+                        text-[10px]
+                        text-[#4A352B]/50
+                      "
+                    >
+                      Seleccionado: {currentFrameLabel}
+                    </div>
 
-                  )
+                  </div>
+                )}
+
+                {/* FINISH */}
+
+                {finishes.length > 0 && (
+                  <div>
+
+                    <label
+                      className="
+                        block
+                        mb-2
+                        text-[10px]
+                        uppercase
+                        tracking-wider
+                        font-semibold
+                        text-[#4A352B]/60
+                      "
+                    >
+                      Acabado
+                    </label>
+
+                    <div
+                      className="
+                        flex
+                        flex-wrap
+                        gap-2
+                      "
+                    >
+
+                      {finishes.map(
+                        (finish) => (
+                          <button
+                            key={finish}
+                            type="button"
+                            className="
+                              px-3
+                              py-2
+                              rounded-lg
+                              border
+                              border-[#D9CEBF]
+                              bg-white
+                              text-xs
+                              text-[#171513]
+                              hover:border-[#B99A62]
+                              transition
+                            "
+                          >
+                            {finish}
+                          </button>
+                        )
+                      )}
+
+                    </div>
+
+                  </div>
+                )}
+
+                {/* THICKNESS */}
+
+                {thicknesses.length > 0 && (
+                  <div>
+
+                    <label
+                      className="
+                        block
+                        mb-2
+                        text-[10px]
+                        uppercase
+                        tracking-wider
+                        font-semibold
+                        text-[#4A352B]/60
+                      "
+                    >
+                      Grosor
+                    </label>
+
+                    <div
+                      className="
+                        flex
+                        flex-wrap
+                        gap-2
+                      "
+                    >
+
+                      {thicknesses.map(
+                        (thickness) => (
+                          <button
+                            key={thickness}
+                            type="button"
+                            onClick={() => {
+                              if (
+                                thickness ===
+                                '2 cm'
+                              ) {
+                                handleDepthChange(
+                                  '2'
+                                );
+                              }
+
+                              if (
+                                thickness ===
+                                '4 cm'
+                              ) {
+                                handleDepthChange(
+                                  '4'
+                                );
+                              }
+                            }}
+                            className="
+                              px-3
+                              py-2
+                              rounded-lg
+                              border
+                              border-[#D9CEBF]
+                              bg-white
+                              text-xs
+                              text-[#171513]
+                              hover:border-[#B99A62]
+                              transition
+                            "
+                          >
+                            {thickness}
+                          </button>
+                        )
+                      )}
+
+                    </div>
+
+                    {materialId ===
+                      'canvas' && (
+                      <div
+                        className="
+                          mt-2
+                          text-[10px]
+                          text-[#4A352B]/50
+                        "
+                      >
+                        Grosor actual:
+                        {' '}
+                        {currentDepthLabel}
+                      </div>
+                    )}
+
+                  </div>
+                )}
+
+                {/* MOUNTING */}
+
+                {mounting.length > 0 && (
+                  <div>
+
+                    <label
+                      className="
+                        block
+                        mb-2
+                        text-[10px]
+                        uppercase
+                        tracking-wider
+                        font-semibold
+                        text-[#4A352B]/60
+                      "
+                    >
+                      Montaje
+                    </label>
+
+                    <div
+                      className="
+                        flex
+                        flex-wrap
+                        gap-2
+                      "
+                    >
+
+                      {mounting.map(
+                        (option) => (
+                          <button
+                            key={option}
+                            type="button"
+                            className="
+                              px-3
+                              py-2
+                              rounded-lg
+                              border
+                              border-[#D9CEBF]
+                              bg-white
+                              text-xs
+                              text-[#171513]
+                              hover:border-[#B99A62]
+                              transition
+                            "
+                          >
+                            {option}
+                          </button>
+                        )
+                      )}
+
+                    </div>
+
+                  </div>
                 )}
 
               </div>
+            )}
 
-            </div>
+          </div>
+        )}
 
-          )}
-
-        </div>
-      )}
-
+      </div>
 
       {/* ======================================================
-          PRICE + CTA
+          PRICE FOOTER
       ====================================================== */}
 
       <div
         className="
-          p-4
-          sm:p-5
           border-t
           border-[#E7E1D8]
-          bg-[#FFFFFF]
-          mt-auto
+          bg-[#F8F5F0]
+          p-4
         "
       >
 
         <div
           className="
             flex
-            items-baseline
+            items-end
             justify-between
-            mb-3
+            gap-4
+          "
+        >
+
+          <div>
+
+            <div
+              className="
+                flex
+                items-center
+                gap-2
+                mb-1
+              "
+            >
+
+              <span
+                className="
+                  text-[10px]
+                  uppercase
+                  tracking-wider
+                  font-semibold
+                  text-[#4A352B]/55
+                "
+              >
+                Precio
+              </span>
+
+              {discountPercent > 0 && (
+                <span
+                  className="
+                    px-1.5
+                    py-0.5
+                    rounded
+                    bg-[#171513]
+                    text-[#B99A62]
+                    text-[9px]
+                    font-bold
+                  "
+                >
+                  -{discountPercent}%
+                </span>
+              )}
+
+            </div>
+
+            <div
+              className="
+                flex
+                items-baseline
+                gap-2
+              "
+            >
+
+              <span
+                className="
+                  text-2xl
+                  font-bold
+                  text-[#171513]
+                "
+              >
+                {formatPrice(
+                  totalPrice,
+                  selectedCurrency
+                )}
+              </span>
+
+              {totalOriginalPrice >
+                totalPrice && (
+                <span
+                  className="
+                    text-xs
+                    text-[#4A352B]/40
+                    line-through
+                  "
+                >
+                  {formatPrice(
+                    totalOriginalPrice,
+                    selectedCurrency
+                  )}
+                </span>
+              )}
+
+            </div>
+
+          </div>
+
+          <button
+            type="button"
+            disabled={!materialAvailable}
+            onClick={onAddToBasket}
+            className="
+              flex
+              items-center
+              justify-center
+              gap-2
+              px-5
+              py-3
+              rounded-xl
+              bg-[#171513]
+              text-white
+              text-sm
+              font-semibold
+              shadow-md
+              hover:bg-[#4A352B]
+              disabled:opacity-40
+              disabled:cursor-not-allowed
+              transition
+            "
+          >
+            <Sparkles
+              className="
+                w-4
+                h-4
+                text-[#B99A62]
+              "
+            />
+
+            <span>
+              {addToCartText}
+            </span>
+          </button>
+
+        </div>
+
+        {/* SHIPPING */}
+
+        <div
+          className="
+            mt-3
+            pt-3
+            border-t
+            border-[#D9CEBF]
+            flex
+            items-center
+            justify-between
             gap-3
           "
         >
@@ -2195,205 +1990,48 @@ export const SizeSelector: React.FC<SizeSelectorProps> = ({
           <div
             className="
               flex
-              items-baseline
-              gap-2.5
-              font-mono
-              tabular-nums
-            "
-          >
-
-            {totalOriginal >
-              totalDiscounted && (
-
-              <span
-                className="
-                  text-sm
-                  text-[#4A352B]/40
-                  line-through
-                "
-              >
-                {formatCurrency(
-                  totalOriginal,
-                  selectedCurrency
-                )}
-              </span>
-
-            )}
-
-
-            <span
-              className="
-                text-3xl
-                font-normal
-                text-[#171513]
-                font-serif-display
-              "
-            >
-              {formatCurrency(
-                totalDiscounted,
-                selectedCurrency
-              )}
-            </span>
-
-          </div>
-
-
-          {effectiveDiscount > 0 && (
-
-            <span
-              className="
-                text-xs
-                font-semibold
-                text-[#FFFFFF]
-                bg-[#B98989]
-                px-2.5
-                py-1
-                rounded-full
-                shadow-2xs
-                tracking-wide
-                whitespace-nowrap
-              "
-            >
-              {effectiveDiscount}% OFF
-            </span>
-
-          )}
-
-        </div>
-
-
-        {/* CTA */}
-
-        <button
-          type="button"
-          onClick={onAddToBasket}
-          disabled={!materialAvailable}
-          className="
-            w-full
-            text-[#FFFFFF]
-            bg-[#171513]
-            hover:bg-[#4A352B]
-            disabled:opacity-50
-            disabled:cursor-not-allowed
-            border
-            border-[#B99A62]
-            py-4
-            px-5
-            rounded-xl
-            font-medium
-            text-sm
-            sm:text-base
-            transition-all
-            shadow-luxury-lg
-            active:scale-[0.99]
-            flex
-            items-center
-            justify-center
-            gap-2
-            group
-          "
-          style={{
-            boxShadow:
-              '0 8px 24px -4px rgba(18,18,18,0.25)',
-          }}
-        >
-
-          <Sparkles
-            className="
-              w-4
-              h-4
-              text-[#B99A62]
-              group-hover:scale-110
-              transition-transform
-            "
-          />
-
-          <span
-            className="
-              tracking-wide
-            "
-          >
-            {addToCartText}
-          </span>
-
-        </button>
-
-
-        {/* SHOPIFY */}
-
-        {onOpenShopify && (
-
-          <button
-            type="button"
-            onClick={onOpenShopify}
-            className="
-              mt-2.5
-              w-full
-              bg-[#FFFFFF]
-              hover:bg-[#F8F5F0]
-              text-[#171513]
-              border
-              border-[#B99A62]
-              py-2.5
-              px-4
-              rounded-xl
-              text-xs
-              font-semibold
-              flex
               items-center
-              justify-center
               gap-2
-              transition-all
-              shadow-luxury-sm
-              active:scale-98
+              min-w-0
             "
-            title="Generar código HTML para Shopify"
           >
-
-            <Code2
+            <Truck
               className="
-                w-3.5
-                h-3.5
+                w-4
+                h-4
                 text-[#B99A62]
+                shrink-0
               "
             />
 
-            <span>
-              Código HTML para Shopify
+            <span
+              className="
+                text-[10px]
+                text-[#4A352B]/65
+              "
+            >
+              {config.deliveryNotice ||
+                'Entrega estimada: 2 - 3 días laborables'}
             </span>
+          </div>
 
-          </button>
-
-        )}
-
-
-        {/* DELIVERY */}
-
-        <div
-          className="
-            mt-3
-            flex
-            items-center
-            justify-center
-            gap-1.5
-            text-[11px]
-            text-[#4A352B]/75
-            font-normal
-          "
-        >
-
-          <Truck
-            className="
-              w-3.5
-              h-3.5
-              text-[#B99A62]
-            "
-          />
-
-          <span>
-            {config.deliveryNotice ||
-              'Entrega estimada: 2 - 3 días laborables'}
-          </span>
+          {config.freeShippingThreshold > 0 && (
+            <span
+              className="
+                hidden
+                sm:block
+                text-[9px]
+                text-[#4A352B]/50
+                whitespace-nowrap
+              "
+            >
+              Envío gratis desde{' '}
+              {formatPrice(
+                config.freeShippingThreshold,
+                selectedCurrency
+              )}
+            </span>
+          )}
 
         </div>
 
@@ -2402,3 +2040,5 @@ export const SizeSelector: React.FC<SizeSelectorProps> = ({
     </div>
   );
 };
+
+export default SizeSelector;
