@@ -1051,36 +1051,16 @@ export default function App() {
 
             {viewMode === '3d' ? (
 
-              <Canvas3DViewer
-
-                customization={
-                  customization
-                }
-
-                viewMode={
-                  viewMode
-                }
-
-                onViewModeChange={
-                  setViewMode
-                }
-
-                onOpenEditor={() =>
-                  setIsEditorOpen(
-                    true
-                  )
-                }
-
-                primaryColor={
-                  storeConfig.primaryColor
-                }
-
-                brandName={
-                  storeConfig.brandName
-                }
-
-              />
-
+           <Canvas3DViewer
+  customization={customization}
+  viewMode={viewMode}
+  onViewModeChange={setViewMode}
+  onOpenEditor={() => setIsEditorOpen(true)}
+  primaryColor={storeConfig.primaryColor}
+  brandName={storeConfig.brandName}
+  selectedMaterial={selectedMaterial}
+  materialConfig={safeMaterialConfig}
+/>
             ) : (
 
               <RoomVisualizer
