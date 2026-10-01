@@ -1420,7 +1420,6 @@ const [viewMode, setViewMode] =
           >
 
             <SizeSelector
-materialId={selectedMaterial}
               customization={
                 customization
               }
