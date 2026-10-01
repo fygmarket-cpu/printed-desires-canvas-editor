@@ -1246,7 +1246,7 @@ export default function App() {
           >
 
             <SizeSelector
-
+materialId={selectedMaterial}
               customization={
                 customization
               }
