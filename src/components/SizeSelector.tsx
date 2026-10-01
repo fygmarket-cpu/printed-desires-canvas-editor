@@ -753,39 +753,42 @@ export const SizeSelector: React.FC<SizeSelectorProps> = ({
             "
           >
 
-            <button
-              type="button"
-              onClick={onOpenEditor}
-              className="
-                flex
-                items-center
-                gap-1.5
-                px-3
-                py-2
-                rounded-lg
-                border
-                border-[#D9CEBF]
-                bg-white
-                text-xs
-                font-medium
-                text-[#171513]
-                hover:bg-[#F2ECE1]
-                transition
-              "
-            >
-              <Edit3
-                className="
-                  w-3.5
-                  h-3.5
-                  text-[#B99A62]
-                "
-              />
+          <button
+  type="button"
+  onClick={onOpenStoreEditor}
+  title="Customize Your Artwork"
+  className="
+    inline-flex
+    items-center
+    justify-center
+    gap-2
+    px-3
+    py-2
+    rounded-lg
+    border
+    border-[#B99A62]
+    bg-[#171513]
+    text-white
+    hover:bg-[#4A352B]
+    transition
+    shadow-luxury-sm
+    text-xs
+    font-semibold
+    whitespace-nowrap
+  "
+>
+  <Sliders
+    className="
+      w-3.5
+      h-3.5
+      text-[#B99A62]
+    "
+  />
 
-              <span className="hidden sm:inline">
-                Editar
-              </span>
-            </button>
-
+  <span>
+    Customize Your Artwork
+  </span>
+</button>
             <button
               type="button"
               onClick={onOpenImageModal}
