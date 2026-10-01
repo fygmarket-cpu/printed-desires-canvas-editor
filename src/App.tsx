@@ -398,15 +398,73 @@ export default function App() {
   /* ==========================================================
      SHOPIFY PHOTO BRIDGE
      
-     Recibe la fotografía subida desde el
-     Liquid de Shopify mediante PrintedDesiresState.
-  ========================================================== */
+   /* ==========================================================
+   SHOPIFY PHOTO BRIDGE
+========================================================== */
 
-  useEffect(() => {
 useEffect(() => {
+
+  const loadShopifyImage = () => {
+
+    const state =
+      (window as any).PrintedDesiresState;
+
+    if (
+      !state ||
+      !state.fileURL
+    ) {
+      return;
+    }
+
+    const imageUrl =
+      state.fileURL;
+
+    const imageName =
+      state.fileName ||
+      'Uploaded Photo';
+
+    setCustomization(
+      (previous) => ({
+        ...previous,
+
+        selectedImage:
+          imageUrl,
+
+        imageName:
+          imageName,
+      })
+    );
+  };
+
+  loadShopifyImage();
+
+  window.addEventListener(
+    'printedDesires:update',
+    loadShopifyImage
+  );
+
+  return () => {
+
+    window.removeEventListener(
+      'printedDesires:update',
+      loadShopifyImage
+    );
+
+  };
+
+}, []);
+
+
+/* ==========================================================
+   SHOPIFY IFRAME IMAGE MESSAGE
+========================================================== */
+
+useEffect(() => {
+
   const handleShopifyImageMessage = (
     event: MessageEvent
   ) => {
+
     if (
       event.origin !==
       'https://fygmarket-cpu.github.io'
@@ -429,13 +487,18 @@ useEffect(() => {
       return;
     }
 
-    setCustomization((previous) => ({
-      ...previous,
-      selectedImage: imageUrl,
-      imageName:
-        event.data.fileName ||
-        'Uploaded Photo',
-    }));
+    setCustomization(
+      (previous) => ({
+        ...previous,
+
+        selectedImage:
+          imageUrl,
+
+        imageName:
+          event.data.fileName ||
+          'Uploaded Photo',
+      })
+    );
   };
 
   window.addEventListener(
@@ -444,82 +507,23 @@ useEffect(() => {
   );
 
   return () => {
+
     window.removeEventListener(
       'message',
       handleShopifyImageMessage
     );
+
   };
+
 }, []);
-    const loadShopifyImage = () => {
 
-      const state =
-        (window as any).PrintedDesiresState;
 
-      if (
-        !state ||
-        !state.fileURL
-      ) {
-        return;
-      }
+/* ==========================================================
+   VIEW MODE
+========================================================== */
 
-      const imageUrl =
-        state.fileURL;
-
-      const imageName =
-        state.fileName ||
-        'Uploaded Photo';
-
-      /*
-       * Actualizamos inmediatamente
-       * la imagen utilizada por el visor 3D.
-       */
-
-      setCustomization(
-        (previous) => ({
-          ...previous,
-
-          selectedImage:
-            imageUrl,
-
-          imageName:
-            imageName,
-
-          /*
-           * Dejamos que el navegador
-           * determine posteriormente
-           * las dimensiones reales.
-           */
-        })
-      );
-    };
-
-    /*
-     * Cargar una imagen que ya exista
-     * al abrir el editor.
-     */
-
-    loadShopifyImage();
-
-    /*
-     * Escuchar nuevas fotografías
-     * subidas desde Shopify.
-     */
-
-    window.addEventListener(
-      'printedDesires:update',
-      loadShopifyImage
-    );
-
-    return () => {
-
-      window.removeEventListener(
-        'printedDesires:update',
-        loadShopifyImage
-      );
-
-    };
-
-  }, []);
+const [viewMode, setViewMode] =
+  useState<'3d' | 'room'>('3d');
   /* ==========================================================
      VIEW MODE
   ========================================================== */
