@@ -459,18 +459,34 @@ useEffect(() => {
    SHOPIFY IFRAME IMAGE MESSAGE
 ========================================================== */
 
+/* ==========================================================
+   SHOPIFY IFRAME IMAGE MESSAGE
+========================================================== */
+
 useEffect(() => {
 
   const handleShopifyImageMessage = (
     event: MessageEvent
   ) => {
 
+    /*
+     * El editor está dentro de un iframe.
+     *
+     * Por lo tanto, el mensaje viene de la
+     * ventana padre (Shopify), no de GitHub.
+     *
+     * Verificamos que realmente venga del parent.
+     */
+
     if (
-      event.origin !==
-      'https://fygmarket-cpu.github.io'
+      event.source !== window.parent
     ) {
       return;
     }
+
+    /*
+     * Verificamos que sea nuestro mensaje.
+     */
 
     if (
       !event.data ||
@@ -480,12 +496,21 @@ useEffect(() => {
       return;
     }
 
+    /*
+     * URL de la imagen subida a Cloudflare R2.
+     */
+
     const imageUrl =
       event.data.fileURL;
 
     if (!imageUrl) {
       return;
     }
+
+    /*
+     * Actualizamos el estado principal
+     * del configurador.
+     */
 
     setCustomization(
       (previous) => ({
@@ -497,14 +522,43 @@ useEffect(() => {
         imageName:
           event.data.fileName ||
           'Uploaded Photo',
+
+        /*
+         * Reiniciamos el zoom y posición
+         * para que la nueva fotografía
+         * empiece correctamente en el visor.
+         */
+
+        transform: {
+          ...previous.transform,
+
+          zoom: 1,
+          panX: 0,
+          panY: 0,
+          rotateAngle: 0,
+          flipH: false,
+          flipV: false,
+        },
+
       })
     );
+
+    console.log(
+      'Printed Desires: Shopify photo received',
+      {
+        imageUrl,
+        fileName:
+          event.data.fileName,
+      }
+    );
   };
+
 
   window.addEventListener(
     'message',
     handleShopifyImageMessage
   );
+
 
   return () => {
 
@@ -516,8 +570,6 @@ useEffect(() => {
   };
 
 }, []);
-
-
 /* ==========================================================
    VIEW MODE
 ========================================================== */
