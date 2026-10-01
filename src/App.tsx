@@ -403,7 +403,53 @@ export default function App() {
   ========================================================== */
 
   useEffect(() => {
+useEffect(() => {
+  const handleShopifyImageMessage = (
+    event: MessageEvent
+  ) => {
+    if (
+      event.origin !==
+      'https://fygmarket-cpu.github.io'
+    ) {
+      return;
+    }
 
+    if (
+      !event.data ||
+      event.data.type !==
+        'PRINTED_DESIRES_IMAGE_READY'
+    ) {
+      return;
+    }
+
+    const imageUrl =
+      event.data.fileURL;
+
+    if (!imageUrl) {
+      return;
+    }
+
+    setCustomization((previous) => ({
+      ...previous,
+      selectedImage: imageUrl,
+      imageName:
+        event.data.fileName ||
+        'Uploaded Photo',
+    }));
+  };
+
+  window.addEventListener(
+    'message',
+    handleShopifyImageMessage
+  );
+
+  return () => {
+    window.removeEventListener(
+      'message',
+      handleShopifyImageMessage
+    );
+  };
+}, []);
     const loadShopifyImage = () => {
 
       const state =
