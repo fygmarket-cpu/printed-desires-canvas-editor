@@ -1078,9 +1078,7 @@ const [viewMode, setViewMode] =
         onOpenCart={() =>
           setIsCartOpen(true)
         }
-onOpenStoreEditor={() =>
-  setIsEditorOpen(true)
-}
+
         onOpenShopify={() =>
           setIsShopifyOpen(true)
         }
