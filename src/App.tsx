@@ -1421,7 +1421,7 @@ onOpenStoreEditor={() =>
             "
           >
 
-            <SizeSelector
+                     <SizeSelector
               customization={
                 customization
               }
@@ -1433,7 +1433,11 @@ onOpenStoreEditor={() =>
               selectedCurrency={
                 selectedCurrency
               }
-materialId={selectedMaterial}
+
+              materialId={
+                selectedMaterial
+              }
+
               onSelectSize={
                 handleSelectSize
               }
@@ -1443,24 +1447,15 @@ materialId={selectedMaterial}
               }
 
               onOpenEditor={() =>
-                  true
-  )
-}
+                setIsEditorOpen(true)
+              }
 
-onOpenStoreEditor={() =>
-  setIsEditorOpen(
-    true
-  )
-}
-                setIsEditorOpen(
-                  true
-                )
+              onOpenStoreEditor={() =>
+                setIsEditorOpen(true)
               }
 
               onOpenImageModal={() =>
-                setIsImageModalOpen(
-                  true
-                )
+                setIsImageModalOpen(true)
               }
 
               onAddToBasket={
@@ -1468,20 +1463,15 @@ onOpenStoreEditor={() =>
               }
 
               onOpenShopify={() =>
-                setIsShopifyOpen(
-                  true
-                )
+                setIsShopifyOpen(true)
               }
 
               onQuickUpdateConfig={
                 (updater) =>
-                  setStoreConfig(
-                    updater
-                  )
+                  setStoreConfig(updater)
               }
 
             />
-
           </div>
 
         </div>
