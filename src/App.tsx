@@ -1443,6 +1443,15 @@ materialId={selectedMaterial}
               }
 
               onOpenEditor={() =>
+                  true
+  )
+}
+
+onOpenStoreEditor={() =>
+  setIsEditorOpen(
+    true
+  )
+}
                 setIsEditorOpen(
                   true
                 )
