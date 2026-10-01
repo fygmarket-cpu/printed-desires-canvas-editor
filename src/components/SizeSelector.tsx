@@ -34,6 +34,8 @@ import {
 interface SizeSelectorProps {
   materialId: MaterialId;
 
+  materialId={selectedMaterial}
+  
   customization: CanvasCustomization;
 
   config: StoreConfig;
