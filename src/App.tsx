@@ -1431,7 +1431,7 @@ const [viewMode, setViewMode] =
               selectedCurrency={
                 selectedCurrency
               }
-
+materialId={selectedMaterial}
               onSelectSize={
                 handleSelectSize
               }
