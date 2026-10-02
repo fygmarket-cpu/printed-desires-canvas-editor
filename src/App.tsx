@@ -44,7 +44,7 @@ const STORAGE_KEY =
   'printed_desires_store_config_v2';
 
 const MATERIAL_CONFIG_STORAGE_KEY =
-  'printed_desires_material_configs_v1';
+  'printed_desires_materialConfigs_v1';
 
 /* ============================================================
    APP
@@ -68,7 +68,7 @@ export default function App() {
 
 const [materialConfigsState, setMaterialConfigsState] =
   useState<Record<MaterialId, MaterialConfig>>(
-    MATERIAL_CONFIGS
+materialConfigs
   );
   /* ==========================================================
      STORE CONFIGURATION
