@@ -23,7 +23,7 @@ import { CartDrawer } from './components/CartDrawer';
 import { QualityInfoModal } from './components/QualityInfoModal';
 import { ShopifyCodeModal } from './components/ShopifyCodeModal';
 
-import {
+
 import {
   DEFAULT_MATERIAL,
   materialConfigs,
