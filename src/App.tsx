@@ -121,7 +121,7 @@ const [materialConfigsState, setMaterialConfigsState] =
     try {
       localStorage.setItem(
         MATERIAL_CONFIG_STORAGE_KEY,
-        JSON.stringify(materialConfigState)
+        JSON.stringify(materialConfigsState)
       );
     } catch (error) {
       console.error(
@@ -138,7 +138,7 @@ const [materialConfigsState, setMaterialConfigsState] =
   const activeMaterialConfig:
     | MaterialConfig
     | undefined =
-    materialConfigState[selectedMaterial];
+    materialConfigsState[selectedMaterial];
 
   /*
    * Fallback de seguridad.
@@ -191,7 +191,7 @@ const safeMaterialConfig: MaterialConfig =
      * Verificamos que el material exista.
      */
 
-    if (!materialConfigState[material]) {
+    if (!materialConfigsState[material]) {
       console.warn(
         `Material "${material}" no está configurado.`
       );
