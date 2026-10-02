@@ -24,8 +24,6 @@ import { QualityInfoModal } from './components/QualityInfoModal';
 import { ShopifyCodeModal } from './components/ShopifyCodeModal';
 
 import {
-  MaterialId,
-  MaterialConfig,
   DEFAULT_MATERIAL,
   materialConfigs,
 } from './materialConfig';
