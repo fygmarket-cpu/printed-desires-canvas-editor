@@ -163,11 +163,10 @@ export default function App() {
    * no existe en la configuración almacenada,
    * utilizamos Canvas.
    */
-
-  const safeMaterialConfig: MaterialConfig =
-    activeMaterialConfig ||
-    materialConfigState[DEFAULT_MATERIAL] ||
-    materialConfigs[DEFAULT_MATERIAL];
+const safeMaterialConfig: MaterialConfig =
+  activeMaterialConfig ||
+  materialConfigsState[DEFAULT_MATERIAL] ||
+  materialConfigsState.canvas;
 
   /* ==========================================================
      CURRENCY
