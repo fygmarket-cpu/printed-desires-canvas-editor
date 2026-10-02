@@ -24,8 +24,9 @@ import { QualityInfoModal } from './components/QualityInfoModal';
 import { ShopifyCodeModal } from './components/ShopifyCodeModal';
 
 import {
+import {
   DEFAULT_MATERIAL,
-  materialConfigs as MATERIAL_CONFIGS,
+  materialConfigs,
 } from './materialConfig';
 import {
   Check,
@@ -67,7 +68,7 @@ export default function App() {
 
 const [materialConfigsState, setMaterialConfigsState] =
   useState<Record<MaterialId, MaterialConfig>>(
-    materialConfigs
+    MATERIAL_CONFIGS
   );
   /* ==========================================================
      STORE CONFIGURATION
