@@ -129,7 +129,7 @@ const [materialConfigsState, setMaterialConfigsState] =
         error
       );
     }
-  }, [materialConfigState]);
+}, [materialConfigsState]);
 
   /* ==========================================================
      ACTIVE MATERIAL CONFIGURATION
