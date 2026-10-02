@@ -68,28 +68,10 @@ export default function App() {
      Esto permitirá añadir nuevos materiales posteriormente.
   ========================================================== */
 
-  const [materialConfigState, setMaterialConfigState] =
-    useState<Record<MaterialId, MaterialConfig>>(() => {
-      try {
-        const saved = localStorage.getItem(
-          MATERIAL_CONFIG_STORAGE_KEY
-        );
-
-        if (saved) {
-          return JSON.parse(saved);
-        }
-      } catch (error) {
-        console.error(
-          'Error loading material configuration',
-          error
-        );
-      }
-
-return {
-  ...materialConfigs,
-};
-    });
-
+const [materialConfigsState, setMaterialConfigsState] =
+  useState<Record<MaterialId, MaterialConfig>>(
+    materialConfigs
+  );
   /* ==========================================================
      STORE CONFIGURATION
   ========================================================== */
