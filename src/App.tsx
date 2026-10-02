@@ -85,7 +85,9 @@ export default function App() {
         );
       }
 
-      return materialConfigs;
+return {
+  ...materialConfigs,
+};
     });
 
   /* ==========================================================
